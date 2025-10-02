@@ -1,28 +1,18 @@
-# Functional Language Optics
+# 関数型言語のオプティクス
 
-Optics is a type of API design that is common to functional languages. This is a
-pure functional concept that is not frequently used in Rust.
+オプティクスは、関数型言語で一般的なAPI設計の一種です。これは純粋関数型の概念であり、Rustではあまり使われていません。
 
-Nevertheless, exploring the concept may be helpful to understand other patterns
-in Rust APIs, such as [visitors](../patterns/behavioural/visitor.md). They also
-have niche use cases.
+しかし、この概念を探求することは、[ビジター](../patterns/behavioural/visitor.md)など、RustのAPIにおける他のパターンを理解するのに役立つかもしれません。また、ニッチなユースケースもあります。
 
-This is quite a large topic, and would require actual books on language design
-to fully get into its abilities. However their applicability in Rust is much
-simpler.
+これはかなり大きなトピックであり、その能力を完全に理解するには言語設計に関する実際の書籍が必要です。しかし、Rustにおける適用可能性はずっとシンプルです。
 
-To explain the relevant parts of the concept, the `Serde`-API will be used as an
-example, as it is one that is difficult for many to understand from simply the
-API documentation.
+この概念の関連部分を説明するために、`Serde`-APIを例として使用します。これは、単にAPIドキュメントから理解することが多くの人にとって困難なものだからです。
 
-In the process, different specific patterns, called Optics, will be covered.
-These are *The Iso*, *The Poly Iso*, and *The Prism*.
+その過程で、オプティクスと呼ばれる異なる特定のパターンを取り上げます。これらは、*アイソ(Iso)*、*ポリアイソ(Poly Iso)*、*プリズム(Prism)*です。
 
-## An API Example: Serde
+## APIの例: Serde
 
-Trying to understand the way *Serde* works by only reading the API is a
-challenge, especially the first time. Consider the `Deserializer` trait,
-implemented by any library which parses a new data format:
+APIを読むだけで*Serde*の動作を理解しようとするのは、特に初めての場合は困難です。新しいデータフォーマットを解析するライブラリによって実装される`Deserializer`トレイトを考えてみましょう:
 
 ```rust,ignore
 pub trait Deserializer<'de>: Sized {
@@ -40,7 +30,7 @@ pub trait Deserializer<'de>: Sized {
 }
 ```
 
-And here's the definition of the `Visitor` trait passed in generically:
+そして、ジェネリックで渡される`Visitor`トレイトの定義は次のとおりです:
 
 ```rust,ignore
 pub trait Visitor<'de>: Sized {
@@ -62,43 +52,29 @@ pub trait Visitor<'de>: Sized {
 }
 ```
 
-There is a lot of type erasure going on here, with multiple levels of associated
-types being passed back and forth.
+ここでは多くの型消去が行われており、複数レベルの関連型が行き来しています。
 
-But what is the big picture? Why not just have the `Visitor` return the pieces
-the caller needs in a streaming API, and call it a day? Why all the extra
-pieces?
+しかし、全体像は何でしょうか? なぜ`Visitor`が呼び出し側が必要とする部分をストリーミングAPIで返すだけにしないのでしょうか? なぜこれらの追加部分が必要なのでしょうか?
 
-One way to understand it is to look at a functional languages concept called
-*optics*.
+これを理解する一つの方法は、*オプティクス*と呼ばれる関数型言語の概念を見ることです。
 
-This is a way to do composition of behavior and proprieties that is designed to
-facilitate patterns common to Rust: failure, type transformation, etc.[^1]
+これは、Rustに共通するパターン(失敗、型変換など)を促進するように設計された、動作とプロパティの合成を行う方法です。[^1]
 
-The Rust language does not have very good support for these directly. However,
-they appear in the design of the language itself, and their concepts can help to
-understand some of Rust's APIs. As a result, this attempts to explain the
-concepts with the way Rust does it.
+Rust言語は、これらを直接的にサポートする機能が非常に貧弱です。しかし、それらは言語自体の設計に現れており、その概念はRustのAPIの一部を理解するのに役立ちます。その結果、これはRustが行う方法で概念を説明しようと試みます。
 
-This will perhaps shed light on what those APIs are achieving: specific
-properties of composability.
+これは、これらのAPIが達成しようとしているもの、つまり合成可能性の特定のプロパティに光を当てるかもしれません。
 
-## Basic Optics
+## 基本的なオプティクス
 
-### The Iso
+### アイソ(Iso)
 
-The Iso is a value transformer between two types. It is extremely simple, but a
-conceptually important building block.
+アイソは、2つの型間の値変換器です。これは非常にシンプルですが、概念的に重要な構成要素です。
 
-As an example, suppose that we have a custom Hash table structure used as a
-concordance for a document.[^2] It uses strings for keys (words) and a list of
-indexes for values (file offsets, for instance).
+例として、ドキュメントの索引として使用されるカスタムハッシュテーブル構造があるとします。[^2] キー(単語)には文字列を使い、値(ファイルオフセットなど)にはインデックスのリストを使います。
 
-A key feature is the ability to serialize this format to disk. A "quick and
-dirty" approach would be to implement a conversion to and from a string in JSON
-format. (Errors are ignored for the time being, they will be handled later.)
+主要な機能は、このフォーマットをディスクにシリアライズできることです。「手早く簡単な」アプローチは、JSON形式の文字列との相互変換を実装することです。(エラーは今のところ無視されます。後で処理されます。)
 
-To write it in a normal form expected by functional language users:
+関数型言語ユーザーが期待する通常の形式で書くと:
 
 ```text
 case class ConcordanceSerDe {
@@ -107,10 +83,9 @@ case class ConcordanceSerDe {
 }
 ```
 
-The Iso is thus a pair of functions which convert values of different types:
-`serialize` and `deserialize`.
+したがって、アイソは異なる型の値を変換する関数のペアです: `serialize`と`deserialize`。
 
-A straightforward implementation:
+直接的な実装:
 
 ```rust
 use std::collections::HashMap;
@@ -133,21 +108,17 @@ impl ConcordanceSerde {
 }
 ```
 
-This may seem rather silly. In Rust, this type of behavior is typically done
-with traits. After all, the standard library has `FromStr` and `ToString` in it.
+これはかなり馬鹿げているように見えるかもしれません。Rustでは、この種の動作は通常トレイトで行われます。結局のところ、標準ライブラリには`FromStr`と`ToString`があります。
 
-But that is where our next subject comes in: Poly Isos.
+しかし、それが次の主題に繋がります: ポリアイソです。
 
-### Poly Isos
+### ポリアイソ(Poly Isos)
 
-The previous example was simply converting between values of two fixed types.
-This next block builds upon it with generics, and is more interesting.
+前の例は、単に2つの固定型の値間の変換でした。次のブロックはジェネリクスでそれを拡張し、より興味深いものです。
 
-Poly Isos allow an operation to be generic over any type while returning a
-single type.
+ポリアイソは、操作を任意の型に対してジェネリックにしながら、単一の型を返すことを可能にします。
 
-This brings us closer to parsing. Consider what a basic parser would do ignoring
-error cases. Again, this is its normal form:
+これにより、解析に近づきます。エラーケースを無視した基本的なパーサーが何をするか考えてみましょう。繰り返しますが、これはその通常の形式です:
 
 ```text
 case class Serde[T] {
@@ -156,10 +127,9 @@ case class Serde[T] {
 }
 ```
 
-Here we have our first generic, the type `T` being converted.
+ここに最初のジェネリック、変換される型`T`があります。
 
-In Rust, this could be implemented with a pair of traits in the standard
-library: `FromStr` and `ToString`. The Rust version even handles errors:
+Rustでは、これは標準ライブラリの2つのトレイトのペアで実装できます: `FromStr`と`ToString`。Rustバージョンはエラーも処理します:
 
 ```rust,ignore
 pub trait FromStr: Sized {
@@ -173,11 +143,9 @@ pub trait ToString {
 }
 ```
 
-Unlike the Iso, the Poly Iso allows application of multiple types, and returns
-them generically. This is what you would want for a basic string parser.
+アイソと異なり、ポリアイソは複数の型の適用を許可し、それらをジェネリックに返します。これは基本的な文字列パーサーに必要なものです。
 
-At first glance, this seems like a good option for writing a parser. Let's see
-it in action:
+一見、これはパーサーを書くための良い選択肢のように見えます。実際に見てみましょう:
 
 ```rust,ignore
 use anyhow;
@@ -211,26 +179,17 @@ fn main() {
 }
 ```
 
-That seems quite logical. However, there are two problems with this.
+これはかなり論理的に見えます。しかし、これには2つの問題があります。
 
-First, `to_string` does not indicate to API users, "this is JSON." Every type
-would need to agree on a JSON representation, and many of the types in the Rust
-standard library already don't. Using this is a poor fit. This can easily be
-resolved with our own trait.
+まず、`to_string`はAPIユーザーに「これはJSONです」と示しません。すべての型がJSON表現に同意する必要があり、Rust標準ライブラリの多くの型は既にそうなっていません。これを使用するのは適していません。これは独自のトレイトで簡単に解決できます。
 
-But there is a second, subtler problem: scaling.
+しかし、2つ目のより微妙な問題があります: スケーラビリティです。
 
-When every type writes `to_string` by hand, this works. But if every single
-person who wants their type to be serializable has to write a bunch of code --
-and possibly different JSON libraries -- to do it themselves, it will turn into
-a mess very quickly!
+すべての型が手動で`to_string`を書く場合、これは機能します。しかし、型をシリアライズ可能にしたいすべての人が大量のコード、そして場合によっては異なるJSONライブラリを書かなければならない場合、それはすぐに混乱に陥ります!
 
-The answer is one of Serde's two key innovations: an independent data model to
-represent Rust data in structures common to data serialization languages. The
-result is that it can use Rust's code generation abilities to create an
-intermediary conversion type it calls a `Visitor`.
+答えはSerdeの2つの主要な革新の1つです: データシリアライゼーション言語に共通する構造でRustデータを表現する独立したデータモデルです。その結果、Rustのコード生成能力を使用して、`Visitor`と呼ばれる中間変換型を作成できます。
 
-This means, in normal form (again, skipping error handling for simplicity):
+これは、通常の形式で(再び、簡潔さのためにエラー処理をスキップして)以下を意味します:
 
 ```text
 case class Serde[T] {
@@ -244,8 +203,7 @@ case class Visitor[T] {
 }
 ```
 
-The result is one Poly Iso and one Iso (respectively). Both of these can be
-implemented with traits:
+結果は1つのポリアイソと1つのアイソです(それぞれ)。これらの両方はトレイトで実装できます:
 
 ```rust
 trait Serde {
@@ -260,9 +218,7 @@ trait Visitor {
 }
 ```
 
-Because there is a uniform set of rules to transform Rust structures to the
-independent form, it is even possible to have code generation creating the
-`Visitor` associated with type `T`:
+Rust構造を独立した形式に変換する統一されたルールセットがあるため、型`T`に関連する`Visitor`を作成するコード生成を行うことさえ可能です:
 
 ```rust,ignore
 #[derive(Default, Serde)] // the "Serde" derive creates the trait impl block
@@ -275,7 +231,7 @@ struct TestStruct {
 generate_visitor!(TestStruct);
 ```
 
-But let's actually try that approach.
+しかし、実際にそのアプローチを試してみましょう。
 
 ```rust,ignore
 fn main() {
@@ -287,23 +243,19 @@ fn main() {
 }
 ```
 
-It turns out that the conversion isn't symmetric after all! On paper it is, but
-with the auto-generated code the name of the actual type necessary to convert
-all the way from `String` is hidden. We'd need some kind of
-`generated_visitor_for!` macro to obtain the type name.
+結局のところ、変換は対称的ではありませんでした! 理論上は対称的ですが、自動生成されたコードでは、`String`から完全に変換するために必要な実際の型の名前が隠されています。型名を取得するには、何らかの`generated_visitor_for!`マクロが必要になります。
 
-It's wonky, but it works... until we get to the elephant in the room.
+不格好ですが、動作します...部屋の中の象に到達するまでは。
 
-The only format currently supported is JSON. How would we support more formats?
+現在サポートされているフォーマットはJSONのみです。より多くのフォーマットをサポートするにはどうすればよいでしょうか?
 
-The current design requires completely re-writing all of the code generation and
-creating a new Serde trait. That is quite terrible and not extensible at all!
+現在の設計では、すべてのコード生成を完全に書き直し、新しいSerdeトレイトを作成する必要があります。これは非常にひどく、まったく拡張可能ではありません!
 
-In order to solve that, we need something more powerful.
+それを解決するには、より強力な何かが必要です。
 
-## Prism
+## プリズム(Prism)
 
-To take format into account, we need something in normal form like this:
+フォーマットを考慮に入れるには、次のような通常の形式の何かが必要です:
 
 ```text
 case class Serde[T, F] {
@@ -312,21 +264,15 @@ case class Serde[T, F] {
 }
 ```
 
-This construct is called a Prism. It is "one level higher" in generics than Poly
-Isos (in this case, the "intersecting" type F is the key).
+この構造はプリズムと呼ばれます。これはポリアイソよりもジェネリクスで「1レベル高い」です(この場合、「交差する」型Fが鍵です)。
 
-Unfortunately because `Visitor` is a trait (since each incarnation requires its
-own custom code), this would require a kind of generic type boundary that Rust
-does not support.
+残念ながら、`Visitor`はトレイトであるため(各実装には独自のカスタムコードが必要です)、これにはRustがサポートしていない種類のジェネリック型境界が必要になります。
 
-Fortunately, we still have that `Visitor` type from before. What is the
-`Visitor` doing? It is attempting to allow each data structure to define the way
-it is itself parsed.
+幸いなことに、以前の`Visitor`型がまだあります。`Visitor`は何をしているのでしょうか? それは、各データ構造が自身が解析される方法を定義できるようにしようとしています。
 
-Well what if we could add one more interface for the generic format? Then the
-`Visitor` is just an implementation detail, and it would "bridge" the two APIs.
+では、ジェネリックフォーマット用にもう1つのインターフェイスを追加できたらどうでしょうか? そうすれば、`Visitor`は単なる実装の詳細であり、2つのAPIを「橋渡し」することになります。
 
-In normal form:
+通常の形式で:
 
 ```text
 case class Serde[T] {
@@ -345,24 +291,17 @@ case class SerdeFormat[T, V] {
 }
 ```
 
-And what do you know, a pair of Poly Isos at the bottom which can be implemented
-as traits!
+そして、どうでしょう、底部にトレイトとして実装できるポリアイソのペアがあります!
 
-Thus we have the Serde API:
+したがって、Serde APIがあります:
 
-1. Each type to be serialized implements `Deserialize` or `Serialize`,
-   equivalent to the `Serde` class
-1. They get a type (well two, one for each direction) implementing the `Visitor`
-   trait, which is usually (but not always) done through code generated by a
-   derive macro. This contains the logic to construct or destruct between the
-   data type and the format of the Serde data model.
-1. The type implementing the `Deserializer` trait handles all details specific
-   to the format, being "driven by" the `Visitor`.
+1. シリアライズされる各型は、`Serde`クラスに相当する`Deserialize`または`Serialize`を実装します
+1. これらは、`Visitor`トレイトを実装する型(実際には2つ、各方向に1つ)を取得します。これは通常(常にではありませんが)deriveマクロによって生成されたコードを通じて行われます。これには、データ型とSerdeデータモデルのフォーマット間で構築または分解するロジックが含まれています。
+1. `Deserializer`トレイトを実装する型は、`Visitor`によって「駆動」されながら、フォーマットに固有のすべての詳細を処理します。
 
-This splitting and Rust type erasure is really to achieve a Prism through
-indirection.
+この分割とRustの型消去は、実際には間接的にプリズムを達成するためのものです。
 
-You can see it on the `Deserializer` trait
+これは`Deserializer`トレイトで確認できます:
 
 ```rust,ignore
 pub trait Deserializer<'de>: Sized {
@@ -380,7 +319,7 @@ pub trait Deserializer<'de>: Sized {
 }
 ```
 
-And the visitor:
+そしてビジター:
 
 ```rust,ignore
 pub trait Visitor<'de>: Sized {
@@ -402,7 +341,7 @@ pub trait Visitor<'de>: Sized {
 }
 ```
 
-And the trait `Deserialize` implemented by the macros:
+そして、マクロによって実装される`Deserialize`トレイト:
 
 ```rust,ignore
 pub trait Deserialize<'de>: Sized {
@@ -412,44 +351,35 @@ pub trait Deserialize<'de>: Sized {
 }
 ```
 
-This has been abstract, so let's look at a concrete example.
+これは抽象的だったので、具体的な例を見てみましょう。
 
-How does actual Serde deserialize a bit of JSON into `struct Concordance` from
-earlier?
+実際のSerdeは、以前の`struct Concordance`にJSONの一部をどのようにデシリアライズしますか?
 
-1. The user would call a library function to deserialize the data. This would
-   create a `Deserializer` based on the JSON format.
-1. Based on the fields in the struct, a `Visitor` would be created (more on that
-   in a moment) which knows how to create each type in a generic data model that
-   was needed to represent it: `Vec` (list), `u64` and `String`.
-1. The deserializer would make calls to the `Visitor` as it parsed items.
-1. The `Visitor` would indicate if the items found were expected, and if not,
-   raise an error to indicate deserialization has failed.
+1. ユーザーはデータをデシリアライズするためにライブラリ関数を呼び出します。これによりJSON形式に基づいた`Deserializer`が作成されます。
+1. 構造体のフィールドに基づいて、`Visitor`が作成されます(これについては後で詳しく説明します)。これは、それを表現するために必要なジェネリックデータモデルの各型を作成する方法を知っています: `Vec`(リスト)、`u64`、`String`。
+1. デシリアライザーはアイテムを解析しながら`Visitor`への呼び出しを行います。
+1. `Visitor`は、見つかったアイテムが期待されているかどうかを示し、そうでない場合はデシリアライゼーションが失敗したことを示すエラーを発生させます。
 
-For our very simple structure above, the expected pattern would be:
+上記の非常にシンプルな構造では、期待されるパターンは次のようになります:
 
-1. Begin visiting a map (*Serde*'s equivalent to `HashMap` or JSON's
-   dictionary).
-1. Visit a string key called "keys".
-1. Begin visiting a map value.
-1. For each item, visit a string key then an integer value.
-1. Visit the end of the map.
-1. Store the map into the `keys` field of the data structure.
-1. Visit a string key called "value_table".
-1. Begin visiting a list value.
-1. For each item, visit an integer.
-1. Visit the end of the list
-1. Store the list into the `value_table` field.
-1. Visit the end of the map.
+1. マップ(*Serde*の`HashMap`またはJSONの辞書に相当するもの)の訪問を開始します。
+1. "keys"という文字列キーを訪問します。
+1. マップ値の訪問を開始します。
+1. 各アイテムについて、文字列キーと整数値を訪問します。
+1. マップの終わりを訪問します。
+6. マップをデータ構造の`keys`フィールドに格納します。
+7. "value_table"という文字列キーを訪問します。
+8. リスト値の訪問を開始します。
+9. 各アイテムについて、整数を訪問します。
+10. リストの終わりを訪問します。
+11. リストを`value_table`フィールドに格納します。
+12. マップの終わりを訪問します。
 
-But what determines which "observation" pattern is expected?
+しかし、どの「観察」パターンが期待されるかを決定するのは何でしょうか?
 
-A functional programming language would be able to use currying to create
-reflection of each type based on the type itself. Rust does not support that, so
-every single type would need to have its own code written based on its fields
-and their properties.
+関数型プログラミング言語は、カリー化を使用して型自体に基づいて各型のリフレクションを作成できます。Rustはそれをサポートしていないため、すべての単一の型は、そのフィールドとそのプロパティに基づいて独自のコードを書く必要があります。
 
-*Serde* solves this usability challenge with a derive macro:
+*Serde*は、deriveマクロでこの使いやすさの課題を解決します:
 
 ```rust,ignore
 use serde::Deserialize;
@@ -461,49 +391,28 @@ struct IdRecord {
 }
 ```
 
-That macro simply generates an impl block causing the struct to implement a
-trait called `Deserialize`.
+そのマクロは、単に構造体に`Deserialize`と呼ばれるトレイトを実装させるimplブロックを生成します。
 
-This is the function that determines how to create the struct itself. Code is
-generated based on the struct's fields. When the parsing library is called - in
-our example, a JSON parsing library - it creates a `Deserializer` and calls
-`Type::deserialize` with it as a parameter.
+これは、構造体自体を作成する方法を決定する関数です。コードは構造体のフィールドに基づいて生成されます。解析ライブラリが呼び出されたとき(この例ではJSON解析ライブラリ)、それは`Deserializer`を作成し、それをパラメータとして`Type::deserialize`を呼び出します。
 
-The `deserialize` code will then create a `Visitor` which will have its calls
-"refracted" by the `Deserializer`. If everything goes well, eventually that
-`Visitor` will construct a value corresponding to the type being parsed and
-return it.
+`deserialize`コードはその後、`Visitor`を作成します。この呼び出しは`Deserializer`によって「屈折」されます。すべてがうまくいけば、最終的にその`Visitor`は解析される型に対応する値を構築して返します。
 
-For a complete example, see the
-[*Serde* documentation](https://serde.rs/deserialize-struct.html).
+完全な例については、[*Serde*ドキュメント](https://serde.rs/deserialize-struct.html)を参照してください。
 
-The result is that types to be deserialized only implement the "top layer" of
-the API, and file formats only need to implement the "bottom layer". Each piece
-can then "just work" with the rest of the ecosystem, since generic types will
-bridge them.
+その結果、デシリアライズされる型はAPIの「最上層」のみを実装し、ファイルフォーマットは「最下層」のみを実装する必要があります。ジェネリック型がそれらを橋渡しするため、各部分はエコシステムの残りの部分と「単に機能する」ことができます。
 
-In conclusion, Rust's generic-inspired type system can bring it close to these
-concepts and use their power, as shown in this API design. But it may also need
-procedural macros to create bridges for its generics.
+結論として、Rustのジェネリクスに影響を受けた型システムは、このAPI設計で示されているように、これらの概念に近づき、その力を使用することができます。しかし、そのジェネリクスのための橋を作成するために手続きマクロも必要になるかもしれません。
 
-If you are interested in learning more about this topic, please check the
-following section.
+このトピックについてもっと学ぶことに興味がある方は、次のセクションをご確認ください。
 
-## See Also
+## 参照
 
-- [lens-rs crate](https://crates.io/crates/lens-rs) for a pre-built lenses
-  implementation, with a cleaner interface than these examples
-- [Serde](https://serde.rs) itself, which makes these concepts intuitive for end
-  users (i.e. defining the structs) without needing to understand the details
-- [luminance](https://github.com/phaazon/luminance-rs) is a crate for drawing
-  computer graphics that uses similar API design, including procedural macros to
-  create full prisms for buffers of different pixel types that remain generic
-- [An Article about Lenses in Scala](https://web.archive.org/web/20221128185849/https://medium.com/zyseme-technology/functional-references-lens-and-other-optics-in-scala-e5f7e2fdafe)
-  that is very readable even without Scala expertise.
-- [Paper: Profunctor Optics: Modular Data
-  Accessors](https://web.archive.org/web/20220701102832/https://arxiv.org/ftp/arxiv/papers/1703/1703.10857.pdf)
-- [Musli](https://github.com/udoprog/musli) is a library which attempts to use a
-  similar structure with a different approach, e.g. doing away with the visitor
+- [lens-rs crate](https://crates.io/crates/lens-rs) - これらの例よりもクリーンなインターフェイスを持つ、事前構築されたレンズ実装
+- [Serde](https://serde.rs)自体 - 詳細を理解する必要なく、エンドユーザー(つまり構造体を定義する人)にとってこれらの概念を直感的にします
+- [luminance](https://github.com/phaazon/luminance-rs) - 同様のAPI設計を使用するコンピュータグラフィックスを描画するためのクレート。異なるピクセルタイプのバッファのための完全なプリズムを作成するための手続きマクロを含み、ジェネリックのままです
+- [Scalaにおけるレンズに関する記事](https://web.archive.org/web/20221128185849/https://medium.com/zyseme-technology/functional-references-lens-and-other-optics-in-scala-e5f7e2fdafe) - Scalaの専門知識がなくても非常に読みやすい
+- [論文: Profunctor Optics: Modular Data Accessors](https://web.archive.org/web/20220701102832/https://arxiv.org/ftp/arxiv/papers/1703/1703.10857.pdf)
+- [Musli](https://github.com/udoprog/musli) - 異なるアプローチで同様の構造を使用しようとするライブラリ。例えば、ビジターを廃止する
 
 [^1]: [School of Haskell: A Little Lens Starter Tutorial](https://web.archive.org/web/20221128190041/https://www.schoolofhaskell.com/school/to-infinity-and-beyond/pick-of-the-week/a-little-lens-starter-tutorial)
 
