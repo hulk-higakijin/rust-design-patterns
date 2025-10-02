@@ -1,8 +1,3 @@
-# Anti-patterns
+# アンチパターン
 
-An [anti-pattern](https://en.wikipedia.org/wiki/Anti-pattern) is a solution to a
-"recurring problem that is usually ineffective and risks being highly
-counterproductive". Just as valuable as knowing how to solve a problem, is
-knowing how *not* to solve it. Anti-patterns give us great counter-examples to
-consider relative to design patterns. Anti-patterns are not confined to code.
-For example, a process can be an anti-pattern, too.
+[アンチパターン](https://en.wikipedia.org/wiki/Anti-pattern)とは、「通常は効果的でなく、非常に逆効果になるリスクがある繰り返し発生する問題」に対する解決策です。問題を解決する方法を知ることと同じくらい価値があるのは、問題を解決*しない*方法を知ることです。アンチパターンは、デザインパターンと比較して検討すべき優れた反例を提供します。アンチパターンはコードに限定されません。例えば、プロセスもアンチパターンになり得ます。
