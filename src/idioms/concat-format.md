@@ -1,13 +1,10 @@
-# Concatenating strings with `format!`
+# `format!` を使った文字列の連結
 
-## Description
+## 説明
 
-It is possible to build up strings using the `push` and `push_str` methods on a
-mutable `String`, or using its `+` operator. However, it is often more
-convenient to use `format!`, especially where there is a mix of literal and
-non-literal strings.
+`push` や `push_str` メソッドを可変な `String` に使用したり、`+` 演算子を使用することで文字列を構築することができます。しかし、特にリテラル文字列と非リテラル文字列が混在する場合は、`format!` を使用する方が便利なことが多いです。
 
-## Example
+## 例
 
 ```rust
 fn say_hello(name: &str) -> String {
@@ -22,13 +19,10 @@ fn say_hello(name: &str) -> String {
 }
 ```
 
-## Advantages
+## 利点
 
-Using `format!` is usually the most succinct and readable way to combine
-strings.
+`format!` を使用することは、通常、文字列を結合する最も簡潔で読みやすい方法です。
 
-## Disadvantages
+## 欠点
 
-It is usually not the most efficient way to combine strings - a series of `push`
-operations on a mutable string is usually the most efficient (especially if the
-string has been pre-allocated to the expected size).
+これは通常、文字列を結合する最も効率的な方法ではありません - 可変文字列に対する一連の `push` 操作が通常最も効率的です（特に文字列が予想されるサイズに事前に割り当てられている場合）。
