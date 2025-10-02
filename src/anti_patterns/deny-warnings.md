@@ -1,11 +1,10 @@
 # `#![deny(warnings)]`
 
-## Description
+## 説明
 
-A well-intentioned crate author wants to ensure their code builds without
-warnings. So they annotate their crate root with the following:
+善意のあるクレート作成者は、自分のコードが警告なしでビルドされることを保証したいと考えています。そのため、クレートのルートに以下のアノテーションを付けます:
 
-## Example
+## 例
 
 ```rust
 #![deny(warnings)]
@@ -13,49 +12,33 @@ warnings. So they annotate their crate root with the following:
 // All is well.
 ```
 
-## Advantages
+## 利点
 
-It is short and will stop the build if anything is amiss.
+短く、何か問題があればビルドを停止します。
 
-## Drawbacks
+## 欠点
 
-By disallowing the compiler to build with warnings, a crate author opts out of
-Rust's famed stability. Sometimes new features or old misfeatures need a change
-in how things are done, thus lints are written that `warn` for a certain grace
-period before being turned to `deny`.
+コンパイラが警告付きでビルドすることを禁止することで、クレート作成者はRustの有名な安定性からオプトアウトすることになります。時には新機能や古い誤機能が、物事の行い方の変更を必要とすることがあり、そのため一定の猶予期間中に`warn`を出すlintが書かれ、その後`deny`に変更されます。
 
-For example, it was discovered that a type could have two `impl`s with the same
-method. This was deemed a bad idea, but in order to make the transition smooth,
-the `overlapping-inherent-impls` lint was introduced to give a warning to those
-stumbling on this fact, before it becomes a hard error in a future release.
+例えば、ある型が同じメソッドを持つ2つの`impl`を持つことができることが発見されました。これは悪い考えだと判断されましたが、移行をスムーズにするために、将来のリリースでハードエラーになる前に、この事実に遭遇した人に警告を与えるために`overlapping-inherent-impls` lintが導入されました。
 
-Also sometimes APIs get deprecated, so their use will emit a warning where
-before there was none.
+また、時にはAPIが非推奨になることがあり、以前は警告がなかった場所で警告が発生するようになります。
 
-All this conspires to potentially break the build whenever something changes.
+これらすべてが相まって、何かが変更されるたびにビルドが壊れる可能性があります。
 
-Furthermore, crates that supply additional lints (e.g. [rust-clippy]) can no
-longer be used unless the annotation is removed. This is mitigated with
-[--cap-lints]. The `--cap-lints=warn` command line argument, turns all `deny`
-lint errors into warnings.
+さらに、追加のlintを提供するクレート（例：[rust-clippy]）は、アノテーションを削除しない限り使用できなくなります。これは[--cap-lints]によって緩和されます。`--cap-lints=warn`コマンドライン引数は、すべての`deny` lintエラーを警告に変えます。
 
-## Alternatives
+## 代替案
 
-There are two ways of tackling this problem: First, we can decouple the build
-setting from the code, and second, we can name the lints we want to deny
-explicitly.
+この問題に取り組むには2つの方法があります。第一に、ビルド設定をコードから切り離すことができ、第二に、明示的に拒否したいlintを指定することができます。
 
-The following command line will build with all warnings set to `deny`:
+以下のコマンドラインは、すべての警告を`deny`に設定してビルドします:
 
 `RUSTFLAGS="-D warnings" cargo build`
 
-This can be done by any individual developer (or be set in a CI tool like
-Travis, but remember that this may break the build when something changes)
-without requiring a change to the code.
+これは、コードの変更を必要とせずに、個々の開発者が実行できます（またはTravisのようなCIツールで設定できますが、何かが変更されたときにビルドが壊れる可能性があることを覚えておいてください）。
 
-Alternatively, we can specify the lints that we want to `deny` in the code. Here
-is a list of warning lints that is (hopefully) safe to deny (as of rustc
-1.48.0):
+あるいは、コード内で`deny`したいlintを指定することもできます。以下は、（おそらく）安全に拒否できる警告lintのリストです（rustc 1.48.0時点）:
 
 ```rust,ignore
 #![deny(
@@ -78,7 +61,7 @@ is a list of warning lints that is (hopefully) safe to deny (as of rustc
 )]
 ```
 
-In addition, the following `allow`ed lints may be a good idea to `deny`:
+さらに、以下の`allow`されたlintを`deny`するのも良いかもしれません:
 
 ```rust,ignore
 #![deny(
@@ -93,18 +76,16 @@ In addition, the following `allow`ed lints may be a good idea to `deny`:
 )]
 ```
 
-Some may also want to add `missing-copy-implementations` to their list.
+`missing-copy-implementations`をリストに追加したい人もいるかもしれません。
 
-Note that we explicitly did not add the `deprecated` lint, as it is fairly
-certain that there will be more deprecated APIs in the future.
+`deprecated` lintを明示的に追加しなかったことに注意してください。将来さらに非推奨のAPIが追加されることはほぼ確実だからです。
 
-## See also
+## 関連項目
 
-- [A collection of all clippy lints](https://rust-lang.github.io/rust-clippy/master)
-- [deprecate attribute] documentation
-- Type `rustc -W help` for a list of lints on your system. Also type
-  `rustc --help` for a general list of options
-- [rust-clippy] is a collection of lints for better Rust code
+- [すべてのclippy lintのコレクション](https://rust-lang.github.io/rust-clippy/master)
+- [deprecate attribute] のドキュメント
+- システム上のlintのリストを見るには`rustc -W help`と入力してください。また、一般的なオプションのリストを見るには`rustc --help`と入力してください
+- [rust-clippy]は、より良いRustコードのためのlintのコレクションです
 
 [rust-clippy]: https://github.com/rust-lang/rust-clippy
 [deprecate attribute]: https://doc.rust-lang.org/reference/attributes.html#deprecation
