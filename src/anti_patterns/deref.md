@@ -1,14 +1,12 @@
-# `Deref` polymorphism
+# `Deref` ポリモーフィズム
 
-## Description
+## 説明
 
-Misuse the `Deref` trait to emulate inheritance between structs, and thus reuse
-methods.
+構造体間の継承をエミュレートするために `Deref` トレイトを誤用し、メソッドを再利用します。
 
-## Example
+## 例
 
-Sometimes we want to emulate the following common pattern from OO languages such
-as Java:
+Java などのオブジェクト指向言語で一般的な以下のパターンをエミュレートしたい場合があります:
 
 ```java
 class Foo {
@@ -23,7 +21,7 @@ public static void main(String[] args) {
 }
 ```
 
-We can use the deref polymorphism anti-pattern to do so:
+これを実現するために、deref ポリモーフィズムアンチパターンを使用できます:
 
 ```rust
 use std::ops::Deref;
@@ -53,22 +51,13 @@ fn main() {
 }
 ```
 
-There is no struct inheritance in Rust. Instead we use composition and include
-an instance of `Foo` in `Bar` (since the field is a value, it is stored inline,
-so if there were fields, they would have the same layout in memory as the Java
-version (probably, you should use `#[repr(C)]` if you want to be sure)).
+Rust には構造体の継承がありません。代わりにコンポジションを使用し、`Bar` に `Foo` のインスタンスを含めます（フィールドが値であるため、インライン格納されます。そのため、フィールドがある場合、メモリレイアウトは Java 版と同じになります（おそらく。確実にしたい場合は `#[repr(C)]` を使用すべきです））。
 
-In order to make the method call work we implement `Deref` for `Bar` with `Foo`
-as the target (returning the embedded `Foo` field). That means that when we
-dereference a `Bar` (for example, using `*`) then we will get a `Foo`. That is
-pretty weird. Dereferencing usually gives a `T` from a reference to `T`, here we
-have two unrelated types. However, since the dot operator does implicit
-dereferencing, it means that the method call will search for methods on `Foo` as
-well as `Bar`.
+メソッド呼び出しを機能させるために、`Foo` をターゲットとして `Bar` に `Deref` を実装します（埋め込まれた `Foo` フィールドを返します）。これは、`Bar` を参照外し（例えば `*` を使用）すると `Foo` が得られることを意味します。これはかなり奇妙です。通常、参照外しは `T` への参照から `T` を与えますが、ここでは2つの無関係な型があります。しかし、ドット演算子は暗黙的な参照外しを行うため、メソッド呼び出しは `Bar` だけでなく `Foo` のメソッドも検索することを意味します。
 
-## Advantages
+## 利点
 
-You save a little boilerplate, e.g.,
+少しのボイラープレートを節約できます。例えば:
 
 ```rust,ignore
 impl Bar {
@@ -78,53 +67,28 @@ impl Bar {
 }
 ```
 
-## Disadvantages
+## 欠点
 
-Most importantly this is a surprising idiom - future programmers reading this in
-code will not expect this to happen. That's because we are misusing the `Deref`
-trait rather than using it as intended (and documented, etc.). It's also because
-the mechanism here is completely implicit.
+最も重要なのは、これが驚くべきイディオムであることです - このコードを読む将来のプログラマーは、これが起こることを期待しません。なぜなら、意図された通り（およびドキュメント化された通りなど）に `Deref` トレイトを使用するのではなく、誤用しているからです。また、ここでのメカニズムが完全に暗黙的であるためでもあります。
 
-This pattern does not introduce subtyping between `Foo` and `Bar` like
-inheritance in Java or C++ does. Furthermore, traits implemented by `Foo` are
-not automatically implemented for `Bar`, so this pattern interacts badly with
-bounds checking and thus generic programming.
+このパターンは、Java や C++ の継承のような `Foo` と `Bar` の間にサブタイピングを導入しません。さらに、`Foo` によって実装されたトレイトは自動的に `Bar` に実装されないため、このパターンは境界チェックとジェネリックプログラミングに悪影響を与えます。
 
-Using this pattern gives subtly different semantics from most OO languages with
-regards to `self`. Usually it remains a reference to the sub-class, with this
-pattern it will be the 'class' where the method is defined.
+このパターンを使用すると、`self` に関してほとんどのオブジェクト指向言語とは微妙に異なるセマンティクスが与えられます。通常はサブクラスへの参照のままですが、このパターンではメソッドが定義されている「クラス」になります。
 
-Finally, this pattern only supports single inheritance, and has no notion of
-interfaces, class-based privacy, or other inheritance-related features. So, it
-gives an experience that will be subtly surprising to programmers used to Java
-inheritance, etc.
+最後に、このパターンは単一継承のみをサポートし、インターフェース、クラスベースのプライバシー、その他の継承関連の機能の概念がありません。そのため、Java の継承などに慣れたプログラマーにとって微妙に驚くべき体験を与えます。
 
-## Discussion
+## 議論
 
-There is no one good alternative. Depending on the exact circumstances it might
-be better to re-implement using traits or to write out the facade methods to
-dispatch to `Foo` manually. We do intend to add a mechanism for inheritance
-similar to this to Rust, but it is likely to be some time before it reaches
-stable Rust. See these [blog](http://aturon.github.io/blog/2015/09/18/reuse/)
-[posts](http://smallcultfollowing.com/babysteps/blog/2015/10/08/virtual-structs-part-4-extended-enums-and-thin-traits/)
-and this [RFC issue](https://github.com/rust-lang/rfcs/issues/349) for more
-details.
+唯一の良い代替案はありません。正確な状況に応じて、トレイトを使用して再実装するか、`Foo` にディスパッチするファサードメソッドを手動で記述する方が良い場合があります。Rust にこれに類似した継承メカニズムを追加する予定ですが、安定版 Rust に到達するまでにはかなりの時間がかかる可能性があります。詳細については、これらの[ブログ](http://aturon.github.io/blog/2015/09/18/reuse/)[投稿](http://smallcultfollowing.com/babysteps/blog/2015/10/08/virtual-structs-part-4-extended-enums-and-thin-traits/)とこの[RFC issue](https://github.com/rust-lang/rfcs/issues/349)を参照してください。
 
-The `Deref` trait is designed for the implementation of custom pointer types.
-The intention is that it will take a pointer-to-`T` to a `T`, not convert
-between different types. It is a shame that this isn't (probably cannot be)
-enforced by the trait definition.
+`Deref` トレイトは、カスタムポインタ型の実装用に設計されています。意図は、`T` へのポインタを `T` に変換することであり、異なる型間の変換ではありません。これがトレイト定義によって強制されていない（おそらくできない）のは残念なことです。
 
-Rust tries to strike a careful balance between explicit and implicit mechanisms,
-favouring explicit conversions between types. Automatic dereferencing in the dot
-operator is a case where the ergonomics strongly favour an implicit mechanism,
-but the intention is that this is limited to degrees of indirection, not
-conversion between arbitrary types.
+Rust は、明示的メカニズムと暗黙的メカニズムの間で慎重なバランスを取ろうとしており、型間の明示的な変換を好みます。ドット演算子での自動参照外しは、エルゴノミクスが暗黙的メカニズムを強く支持するケースですが、意図は、これが間接参照の度合いに限定され、任意の型間の変換ではないことです。
 
-## See also
+## 関連項目
 
-- [Collections are smart pointers idiom](../idioms/deref.md).
-- Delegation crates for less boilerplate like
-  [delegate](https://crates.io/crates/delegate) or
+- [コレクションはスマートポインタのイディオム](../idioms/deref.md)
+- より少ないボイラープレートのための委譲クレート:
+  [delegate](https://crates.io/crates/delegate) または
   [ambassador](https://crates.io/crates/ambassador)
-- [Documentation for `Deref` trait](https://doc.rust-lang.org/std/ops/trait.Deref.html).
+- [`Deref` トレイトのドキュメント](https://doc.rust-lang.org/std/ops/trait.Deref.html)
