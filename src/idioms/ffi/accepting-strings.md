@@ -1,32 +1,25 @@
-# Accepting Strings
+# 文字列の受け入れ
 
-## Description
+## 説明
 
-When accepting strings via FFI through pointers, there are two principles that
-should be followed:
+FFIを通じてポインタ経由で文字列を受け入れる場合、以下の2つの原則に従うべきです：
 
-1. Keep foreign strings "borrowed", rather than copying them directly.
-2. Minimize the amount of complexity and `unsafe` code involved in converting
-   from a C-style string to native Rust strings.
+1. 外部の文字列を直接コピーするのではなく、「借用」した状態に保つ。
+2. C形式の文字列からRustのネイティブ文字列への変換に関わる複雑さと`unsafe`コードの量を最小限に抑える。
 
-## Motivation
+## 動機
 
-The strings used in C have different behaviours to those used in Rust, namely:
+Cで使用される文字列は、Rustで使用される文字列とは異なる振る舞いをします。具体的には：
 
-- C strings are null-terminated while Rust strings store their length
-- C strings can contain any arbitrary non-zero byte while Rust strings must be
-  UTF-8
-- C strings are accessed and manipulated using `unsafe` pointer operations while
-  interactions with Rust strings go through safe methods
+- C文字列はnull終端であるのに対し、Rust文字列は長さを保持する
+- C文字列は任意の非ゼロバイトを含むことができるが、Rust文字列はUTF-8でなければならない
+- C文字列は`unsafe`なポインタ操作を使用してアクセス・操作されるが、Rust文字列との対話は安全なメソッドを通じて行われる
 
-The Rust standard library comes with C equivalents of Rust's `String` and `&str`
-called `CString` and `&CStr`, that allow us to avoid a lot of the complexity and
-`unsafe` code involved in converting between C strings and Rust strings.
+Rust標準ライブラリには、Rustの`String`と`&str`に相当するC言語用の型として`CString`と`&CStr`が用意されており、これらによってC文字列とRust文字列間の変換に関わる複雑さと`unsafe`コードの多くを回避できます。
 
-The `&CStr` type also allows us to work with borrowed data, meaning passing
-strings between Rust and C is a zero-cost operation.
+`&CStr`型は借用データを扱うことも可能にし、RustとC間の文字列受け渡しがゼロコスト操作になります。
 
-## Code Example
+## コード例
 
 ```rust,ignore
 pub mod unsafe_module {
@@ -62,14 +55,14 @@ pub mod unsafe_module {
 }
 ```
 
-## Advantages
+## 利点
 
-The example is written to ensure that:
+この例は以下を保証するように書かれています：
 
-1. The `unsafe` block is as small as possible.
-2. The pointer with an "untracked" lifetime becomes a "tracked" shared reference
+1. `unsafe`ブロックができるだけ小さい。
+2. 「追跡されていない」ライフタイムを持つポインタが「追跡された」共有参照になる
 
-Consider an alternative, where the string is actually copied:
+文字列が実際にコピーされる代替案を考えてみましょう：
 
 ```rust,ignore
 pub mod unsafe_module {
@@ -113,26 +106,17 @@ pub mod unsafe_module {
 }
 ```
 
-This code is inferior to the original in two respects:
+このコードは次の2つの点でオリジナルより劣っています：
 
-1. There is much more `unsafe` code, and more importantly, more invariants it
-   must uphold.
-2. Due to the extensive arithmetic required, there is a bug in this version that
-   cases Rust `undefined behaviour`.
+1. `unsafe`コードがはるかに多く、さらに重要なことに、維持しなければならない不変条件が増える。
+2. 広範な算術演算が必要なため、このバージョンにはRustの`未定義動作`を引き起こすバグがある。
 
-The bug here is a simple mistake in pointer arithmetic: the string was copied,
-all `msg_len` bytes of it. However, the `NUL` terminator at the end was not.
+ここでのバグは、ポインタ演算における単純なミスです：文字列はコピーされましたが、その`msg_len`バイト全てです。しかし、末尾の`NUL`終端子はコピーされませんでした。
 
-The Vector then had its size *set* to the length of the *zero padded string* --
-rather than *resized* to it, which could have added a zero at the end. As a
-result, the last byte in the Vector is uninitialized memory. When the `CString`
-is created at the bottom of the block, its read of the Vector will cause
-`undefined behaviour`!
+その後、Vectorのサイズは*ゼロパディングされた文字列*の長さに*設定*されました――末尾にゼロを追加できたはずの*リサイズ*ではなく。結果として、Vector内の最後のバイトは初期化されていないメモリになります。ブロックの最後で`CString`が作成されるとき、Vectorの読み取りが`未定義動作`を引き起こします！
 
-Like many such issues, this would be difficult issue to track down. Sometimes it
-would panic because the string was not `UTF-8`, sometimes it would put a weird
-character at the end of the string, sometimes it would just completely crash.
+このような問題の多くと同様に、これは追跡が困難な問題です。文字列が`UTF-8`でないためにパニックすることもあれば、文字列の末尾に奇妙な文字が入ることもあれば、完全にクラッシュすることもあります。
 
-## Disadvantages
+## 欠点
 
-None?
+なし？
