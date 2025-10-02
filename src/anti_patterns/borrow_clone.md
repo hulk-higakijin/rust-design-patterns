@@ -1,14 +1,10 @@
-# Clone to satisfy the borrow checker
+# 借用チェッカーを満たすためのクローン
 
-## Description
+## 説明
 
-The borrow checker prevents Rust users from developing otherwise unsafe code by
-ensuring that either: only one mutable reference exists, or potentially many but
-all immutable references exist. If the code written does not hold true to these
-conditions, this anti-pattern arises when the developer resolves the compiler
-error by cloning the variable.
+借用チェッカーは、以下のいずれかを保証することで、Rustユーザーが安全でないコードを開発するのを防ぎます：可変参照が1つだけ存在するか、または複数の不変参照が存在するかのいずれかです。記述されたコードがこれらの条件を満たさない場合、開発者が変数をクローンすることでコンパイラエラーを解決しようとすると、このアンチパターンが発生します。
 
-## Example
+## 例
 
 ```rust
 // define any variable
@@ -27,42 +23,25 @@ println!("{x}");
 *y += 1;
 ```
 
-## Motivation
+## 動機
 
-It is tempting, particularly for beginners, to use this pattern to resolve
-confusing issues with the borrow checker. However, there are serious
-consequences. Using `.clone()` causes a copy of the data to be made. Any changes
-between the two are not synchronized -- as if two completely separate variables
-exist.
+特に初心者にとって、借用チェッカーの混乱する問題を解決するためにこのパターンを使用することは魅力的です。しかし、重大な結果があります。`.clone()`を使用すると、データのコピーが作成されます。2つの間の変更は同期されません -- まるで2つの完全に別々の変数が存在するかのようです。
 
-There are special cases -- `Rc<T>` is designed to handle clones intelligently.
-It internally manages exactly one copy of the data. Invoking `.clone()` on `Rc`
-produces a new `Rc` instance, which points to the same data as the source `Rc`,
-while increasing a reference count. The same applies to `Arc`, the thread-safe
-counterpart of `Rc`.
+特殊なケースがあります -- `Rc<T>`はクローンを賢く処理するように設計されています。これは、データのコピーを正確に1つだけ内部で管理します。`Rc`で`.clone()`を呼び出すと、ソースの`Rc`と同じデータを指す新しい`Rc`インスタンスが生成され、参照カウントが増加します。`Rc`のスレッドセーフな対応物である`Arc`にも同じことが当てはまります。
 
-In general, clones should be deliberate, with full understanding of the
-consequences. If a clone is used to make a borrow checker error disappear,
-that's a good indication this anti-pattern may be in use.
+一般的に、クローンは意図的に行われるべきであり、その結果を完全に理解している必要があります。借用チェッカーのエラーを消すためにクローンが使用されている場合、それはこのアンチパターンが使用されている可能性がある良い兆候です。
 
-Even though `.clone()` is an indication of a bad pattern, sometimes **it is fine
-to write inefficient code**, in cases such as when:
+`.clone()`がアンチパターンの兆候であっても、以下のような場合には**非効率的なコードを書くことは問題ありません**：
 
-- the developer is still new to ownership
-- the code doesn't have great speed or memory constraints (like hackathon
-  projects or prototypes)
-- satisfying the borrow checker is really complicated, and you prefer to
-  optimize readability over performance
+- 開発者が所有権にまだ慣れていない場合
+- コードに厳しい速度やメモリの制約がない場合（ハッカソンプロジェクトやプロトタイプなど）
+- 借用チェッカーを満たすことが本当に複雑で、パフォーマンスよりも可読性を優先したい場合
 
-If an unnecessary clone is suspected, The
-[Rust Book's chapter on Ownership](https://doc.rust-lang.org/book/ownership.html)
-should be understood fully before assessing whether the clone is required or
-not.
+不要なクローンが疑われる場合、クローンが必要かどうかを評価する前に、[Rust Bookの所有権に関する章](https://doc.rust-lang.org/book/ownership.html)を完全に理解する必要があります。
 
-Also be sure to always run `cargo clippy` in your project, which will detect
-some cases in which `.clone()` is not necessary.
+また、プロジェクトで常に`cargo clippy`を実行してください。これにより、`.clone()`が不要な一部のケースが検出されます。
 
-## See also
+## 参照
 
 - [`mem::{take(_), replace(_)}` to keep owned values in changed enums](../idioms/mem-replace.md)
 - [`Rc<T>` documentation, which handles .clone() intelligently](http://doc.rust-lang.org/std/rc/)
