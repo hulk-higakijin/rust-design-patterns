@@ -1,11 +1,9 @@
-# Programming paradigms
+# プログラミングパラダイム
 
-One of the biggest hurdles to understanding functional programs when coming from
-an imperative background is the shift in thinking. Imperative programs describe
-**how** to do something, whereas declarative programs describe **what** to do.
-Let's sum the numbers from 1 to 10 to show this.
+命令型プログラミングの経験がある人が関数型プログラムを理解する上で最も大きなハードルの一つは、考え方の転換です。命令型プログラムは**どのように**やるかを記述するのに対し、宣言型プログラムは**何を**するかを記述します。
+1から10までの数値を合計する例を見てみましょう。
 
-## Imperative
+## 命令型
 
 ```rust
 let mut sum = 0;
@@ -15,10 +13,9 @@ for i in 1..11 {
 println!("{sum}");
 ```
 
-With imperative programs, we have to play compiler to see what is happening.
-Here, we start with a `sum` of `0`. Next, we iterate through the range from 1
-to 10. Each time through the loop, we add the corresponding value in the range.
-Then we print it out.
+命令型プログラムでは、何が起こっているかを理解するためにコンパイラの役割を演じる必要があります。
+ここでは、`sum`を`0`から始めます。次に、1から10までの範囲を反復処理します。ループを通過するたびに、範囲内の対応する値を加算します。
+そして、それを出力します。
 
 | `i` | `sum` |
 | :-: | :---: |
@@ -33,26 +30,18 @@ Then we print it out.
 |  9  |  45   |
 | 10  |  55   |
 
-This is how most of us start out programming. We learn that a program is a set
-of steps.
+これは、私たちの多くがプログラミングを始める方法です。プログラムは一連のステップであることを学びます。
 
-## Declarative
+## 宣言型
 
 ```rust
 println!("{}", (1..11).fold(0, |a, b| a + b));
 ```
 
-Whoa! This is really different! What's going on here? Remember that with
-declarative programs we are describing **what** to do, rather than **how** to do
-it. `fold` is a function that
-[composes](https://en.wikipedia.org/wiki/Function_composition) functions. The
-name is a convention from Haskell.
+わあ！これは本当に違いますね！何が起こっているのでしょうか？宣言型プログラムでは、**どのように**やるかではなく、**何を**するかを記述することを思い出してください。`fold`は関数を
+[合成する](https://en.wikipedia.org/wiki/Function_composition)関数です。この名前はHaskellの慣例から来ています。
 
-Here, we are composing functions of addition (this closure: `|a, b| a + b`) with
-a range from 1 to 10. The `0` is the starting point, so `a` is `0` at first. `b`
-is the first element of the range, `1`. `0 + 1 = 1` is the result. So now we
-`fold` again, with `a = 1`, `b = 2` and so `1 + 2 = 3` is the next result. This
-process continues until we get to the last element in the range, `10`.
+ここでは、加算の関数（このクロージャ：`|a, b| a + b`）を1から10までの範囲と合成しています。`0`は開始点なので、最初は`a`が`0`です。`b`は範囲の最初の要素である`1`です。`0 + 1 = 1`が結果です。そして、`a = 1`、`b = 2`で再び`fold`し、`1 + 2 = 3`が次の結果になります。このプロセスは範囲の最後の要素`10`に到達するまで続きます。
 
 | `a` | `b` | result |
 | :-: | :-: | :----: |
