@@ -1,11 +1,10 @@
-# Return consumed argument on error
+# エラー時に消費された引数を返す
 
-## Description
+## 説明
 
-If a fallible function consumes (moves) an argument, return that argument back
-inside an error.
+失敗する可能性のある関数が引数を消費（ムーブ）する場合、エラー内でその引数を返します。
 
-## Example
+## 例
 
 ```rust
 pub fn send(value: String) -> Result<(), SendError> {
@@ -42,20 +41,16 @@ fn main() {
 }
 ```
 
-## Motivation
+## 動機
 
-In case of error you may want to try some alternative way or to retry action in
-case of non-deterministic function. But if the argument is always consumed, you
-are forced to clone it on every call, which is not very efficient.
+エラーが発生した場合、代替手段を試したり、非決定的な関数の場合は操作を再試行したりすることがあります。しかし、引数が常に消費される場合、呼び出しのたびにクローンを作成する必要があり、あまり効率的ではありません。
 
-The standard library uses this approach in e.g. `String::from_utf8` method. When
-given a vector that doesn't contain valid UTF-8, a `FromUtf8Error` is returned.
-You can get original vector back using `FromUtf8Error::into_bytes` method.
+標準ライブラリでは、例えば`String::from_utf8`メソッドでこのアプローチを使用しています。有効なUTF-8を含まないベクタが与えられた場合、`FromUtf8Error`が返されます。`FromUtf8Error::into_bytes`メソッドを使用して元のベクタを取り戻すことができます。
 
-## Advantages
+## 利点
 
-Better performance because of moving arguments whenever possible.
+可能な限り引数をムーブすることによる、より良いパフォーマンス。
 
-## Disadvantages
+## 欠点
 
-Slightly more complex error types.
+エラー型がわずかに複雑になります。
