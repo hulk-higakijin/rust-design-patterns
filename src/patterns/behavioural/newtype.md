@@ -1,21 +1,17 @@
 # Newtype
 
-What if in some cases we want a type to behave similar to another type or
-enforce some behaviour at compile time when using only type aliases would not be
-enough?
+ある型を別の型と似たように振る舞わせたい、または型エイリアスだけでは不十分な場合にコンパイル時に特定の振る舞いを強制したい場合、どうすればよいでしょうか？
 
-For example, if we want to create a custom `Display` implementation for `String`
-due to security considerations (e.g. passwords).
+たとえば、セキュリティ上の理由（パスワードなど）で `String` にカスタムの `Display` 実装を作成したい場合などです。
 
-For such cases we could use the `Newtype` pattern to provide **type safety** and
-**encapsulation**.
+このような場合、`Newtype` パターンを使用して **型安全性** と **カプセル化** を提供できます。
 
-## Description
+## 説明
 
-Use a tuple struct with a single field to make an opaque wrapper for a type.
-This creates a new type, rather than an alias to a type (`type` items).
+単一のフィールドを持つタプル構造体を使用して、型の不透明なラッパーを作成します。
+これにより、型のエイリアス（`type` 項目）ではなく、新しい型が作成されます。
 
-## Example
+## 例
 
 ```rust
 use std::fmt::Display;
@@ -42,56 +38,41 @@ unsecured_password: ThisIsMyPassword
 secured_password: ****************
 ```
 
-## Motivation
+## 動機
 
-The primary motivation for newtypes is abstraction. It allows you to share
-implementation details between types while precisely controlling the interface.
-By using a newtype rather than exposing the implementation type as part of an
-API, it allows you to change implementation backwards compatibly.
+newtype の主な動機は抽象化です。これにより、型間で実装の詳細を共有しながら、インターフェースを正確に制御できます。
+API の一部として実装型を公開するのではなく、newtype を使用することで、後方互換性を保ちながら実装を変更できます。
 
-Newtypes can be used for distinguishing units, e.g., wrapping `f64` to give
-distinguishable `Miles` and `Kilometres`.
+Newtype は単位を区別するために使用できます。たとえば、`f64` をラップして区別可能な `Miles` と `Kilometres` を提供します。
 
-## Advantages
+## 利点
 
-The wrapped and wrapper types are not type compatible (as opposed to using
-`type`), so users of the newtype will never 'confuse' the wrapped and wrapper
-types.
+ラップされた型とラッパー型は型互換性がありません（`type` を使用する場合とは異なります）。そのため、newtype のユーザーがラップされた型とラッパー型を「混同」することはありません。
 
-Newtypes are a zero-cost abstraction - there is no runtime overhead.
+Newtype はゼロコスト抽象化です - ランタイムオーバーヘッドはありません。
 
-The privacy system ensures that users cannot access the wrapped type (if the
-field is private, which it is by default).
+プライバシーシステムにより、ユーザーはラップされた型にアクセスできません（フィールドがプライベートの場合、デフォルトではプライベートです）。
 
-## Disadvantages
+## 欠点
 
-The downside of newtypes (especially compared with type aliases), is that there
-is no special language support. This means there can be *a lot* of boilerplate.
-You need a 'pass through' method for every method you want to expose on the
-wrapped type, and an impl for every trait you want to also be implemented for
-the wrapper type.
+newtype の欠点（特に型エイリアスと比較して）は、特別な言語サポートがないことです。つまり、*大量の* ボイラープレートが発生する可能性があります。
+ラップされた型で公開したいすべてのメソッドに対して「パススルー」メソッドが必要であり、ラッパー型にも実装したいすべてのトレイトに対して impl が必要です。
 
-## Discussion
+## 議論
 
-Newtypes are very common in Rust code. Abstraction or representing units are the
-most common uses, but they can be used for other reasons:
+Newtype は Rust コードで非常に一般的です。抽象化や単位の表現が最も一般的な用途ですが、他の理由でも使用できます：
 
-- restricting functionality (reduce the functions exposed or traits
-  implemented),
-- making a type with copy semantics have move semantics,
-- abstraction by providing a more concrete type and thus hiding internal types,
-  e.g.,
+- 機能の制限（公開される関数や実装されるトレイトを減らす）
+- コピーセマンティクスを持つ型をムーブセマンティクスにする
+- より具体的な型を提供することによる抽象化、つまり内部型を隠す、例：
 
 ```rust,ignore
 pub struct Foo(Bar<T1, T2>);
 ```
 
-Here, `Bar` might be some public, generic type and `T1` and `T2` are some
-internal types. Users of our module shouldn't know that we implement `Foo` by
-using a `Bar`, but what we're really hiding here is the types `T1` and `T2`, and
-how they are used with `Bar`.
+ここで、`Bar` は何らかの公開されたジェネリック型であり、`T1` と `T2` は内部型です。モジュールのユーザーは、`Foo` を `Bar` を使用して実装していることを知る必要はありませんが、ここで実際に隠しているのは型 `T1` と `T2`、およびそれらが `Bar` でどのように使用されているかです。
 
-## See also
+## 参照
 
 - [Advanced Types in the book](https://doc.rust-lang.org/book/ch19-04-advanced-types.html?highlight=newtype#using-the-newtype-pattern-for-type-safety-and-abstraction)
 - [Newtypes in Haskell](https://wiki.haskell.org/Newtype)
