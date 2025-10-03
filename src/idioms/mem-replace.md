@@ -1,14 +1,14 @@
-# `mem::{take(_), replace(_)}` to keep owned values in changed enums
+# `mem::{take(_), replace(_)}` で変更された列挙型の所有値を保持する
 
-## Description
+## 説明
 
-Say we have a `&mut MyEnum` which has (at least) two variants,
-`A { name: String, x: u8 }` and `B { name: String }`. Now we want to change
-`MyEnum::A` to a `B` if `x` is zero, while keeping `MyEnum::B` intact.
+`&mut MyEnum` があり、（少なくとも）2つのバリアント、
+`A { name: String, x: u8 }` と `B { name: String }` を持つとします。ここで、
+`x` がゼロの場合は `MyEnum::A` を `B` に変更し、`MyEnum::B` はそのまま維持したいとします。
 
-We can do this without cloning the `name`.
+これは `name` をクローンすることなく実現できます。
 
-## Example
+## 例
 
 ```rust
 use std::mem;
@@ -31,7 +31,7 @@ fn a_to_b(e: &mut MyEnum) {
 }
 ```
 
-This also works with more variants:
+これは、より多くのバリアントでも動作します：
 
 ```rust
 use std::mem;
@@ -60,61 +60,59 @@ fn swizzle(e: &mut MultiVariateEnum) {
 }
 ```
 
-## Motivation
+## 動機
 
-When working with enums, we may want to change an enum value in place, perhaps
-to another variant. This is usually done in two phases to keep the borrow
-checker happy. In the first phase, we observe the existing value and look at its
-parts to decide what to do next. In the second phase we may conditionally change
-the value (as in the example above).
+列挙型を扱う際、列挙型の値を別のバリアントに変更したい場合があります。
+これは通常、借用チェッカーを満足させるために2つのフェーズで行われます。最初のフェーズでは、既存の値を観察し、
+その部分を見て次に何をすべきかを決定します。2番目のフェーズでは、
+条件付きで値を変更する可能性があります（上記の例のように）。
 
-The borrow checker won't allow us to take out `name` of the enum (because
-*something* must be there.) We could of course `.clone()` name and put the clone
-into our `MyEnum::B`, but that would be an instance of the
-[Clone to satisfy the borrow checker](../anti_patterns/borrow_clone.md)
-anti-pattern. Anyway, we can avoid the extra allocation by changing `e` with
-only a mutable borrow.
+借用チェッカーは、列挙型から `name` を取り出すことを許可しません（なぜなら、
+*何か* がそこになければならないからです）。もちろん、name を `.clone()` して、そのクローンを
+`MyEnum::B` に入れることもできますが、それは
+[借用チェッカーを満足させるためのクローン](../anti_patterns/borrow_clone.md)
+アンチパターンの一例になります。いずれにせよ、可変借用だけで `e` を変更することで、
+余分なアロケーションを避けることができます。
 
-`mem::take` lets us swap out the value, replacing it with its default value, and
-returning the previous value. For `String`, the default value is an empty
-`String`, which does not need to allocate. As a result, we get the original
-`name` *as an owned value*. We can then wrap this in another enum.
+`mem::take` は、値を交換して、デフォルト値に置き換え、
+以前の値を返すことを可能にします。`String` の場合、デフォルト値は空の
+`String` であり、アロケーションを必要としません。結果として、元の
+`name` を *所有値として* 取得します。これを別の列挙型でラップできます。
 
-**NOTE:** `mem::replace` is very similar, but allows us to specify what to
-replace the value with. An equivalent to our `mem::take` line would be
-`mem::replace(name, String::new())`.
+**注：** `mem::replace` は非常に似ていますが、値を何に置き換えるかを指定できます。
+`mem::take` 行と同等のものは
+`mem::replace(name, String::new())` です。
 
-Note, however, that if we are using an `Option` and want to replace its value
-with a `None`, `Option`’s `take()` method provides a shorter and more idiomatic
-alternative.
+ただし、`Option` を使用していて、その値を
+`None` に置き換えたい場合、`Option` の `take()` メソッドは、より短く、よりイディオマティックな
+代替手段を提供します。
 
-## Advantages
+## 利点
 
-Look ma, no allocation! Also you may feel like Indiana Jones while doing it.
+見てください、アロケーションなしです！また、これを行っている間、インディ・ジョーンズのように感じるかもしれません。
 
-## Disadvantages
+## 欠点
 
-This gets a bit wordy. Getting it wrong repeatedly will make you hate the borrow
-checker. The compiler may fail to optimize away the double store, resulting in
-reduced performance as opposed to what you'd do in unsafe languages.
+これは少し冗長になります。繰り返し間違えると、借用チェッカーを嫌いになるでしょう。
+コンパイラは二重ストアを最適化できない場合があり、アンセーフな言語で行うことと比較して
+パフォーマンスが低下する可能性があります。
 
-Furthermore, the type you are taking needs to implement the
-[`Default` trait](./default.md). However, if the type you're working with
-doesn't implement this, you can instead use `mem::replace`.
+さらに、取得する型は
+[`Default` トレイト](./default.md)を実装する必要があります。ただし、作業している型が
+これを実装していない場合は、代わりに `mem::replace` を使用できます。
 
-## Discussion
+## 議論
 
-This pattern is only of interest in Rust. In GC'd languages, you'd take the
-reference to the value by default (and the GC would keep track of refs), and in
-other low-level languages like C you'd simply alias the pointer and fix things
-later.
+このパターンは Rust においてのみ興味深いものです。GC のある言語では、デフォルトで
+値への参照を取得し（GC が参照を追跡します）、C のような他の低レベル言語では、単に
+ポインタをエイリアスして、後で修正します。
 
-However, in Rust, we have to do a little more work to do this. An owned value
-may only have one owner, so to take it out, we need to put something back in –
-like Indiana Jones, replacing the artifact with a bag of sand.
+しかし、Rust では、これを行うためにもう少し作業を行う必要があります。所有値は
+1つの所有者しか持つことができないため、それを取り出すには、何かを戻す必要があります -
+インディ・ジョーンズのように、アーティファクトを砂の袋に置き換えます。
 
-## See also
+## 関連項目
 
-This gets rid of the
-[Clone to satisfy the borrow checker](../anti_patterns/borrow_clone.md)
-anti-pattern in a specific case.
+これは、特定のケースにおいて
+[借用チェッカーを満足させるためのクローン](../anti_patterns/borrow_clone.md)
+アンチパターンを取り除きます。
