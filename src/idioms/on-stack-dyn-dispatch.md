@@ -1,13 +1,10 @@
-# On-Stack Dynamic Dispatch
+# スタック上での動的ディスパッチ
 
-## Description
+## 説明
 
-We can dynamically dispatch over multiple values, however, to do so, we need to
-declare multiple variables to bind differently-typed objects. To extend the
-lifetime as necessary, we can use deferred conditional initialization, as seen
-below:
+複数の値に対して動的にディスパッチできますが、そのためには異なる型のオブジェクトをバインドする複数の変数を宣言する必要があります。必要に応じてライフタイムを延長するために、以下に示すような遅延条件付き初期化を使用できます：
 
-## Example
+## 例
 
 ```rust
 use std::io;
@@ -29,27 +26,19 @@ let readable: &mut dyn io::Read = if arg == "-" {
 # }
 ```
 
-## Motivation
+## 動機
 
-Rust monomorphises code by default. This means a copy of the code will be
-generated for each type it is used with and optimized independently. While this
-allows for very fast code on the hot path, it also bloats the code in places
-where performance is not of the essence, thus costing compile time and cache
-usage.
+Rustはデフォルトでコードを単相化します。これは、使用される各型に対してコードのコピーが生成され、独立して最適化されることを意味します。これによりホットパス上で非常に高速なコードが実現できますが、パフォーマンスが重要でない場所ではコードが肥大化し、コンパイル時間とキャッシュ使用量のコストがかかります。
 
-Luckily, Rust allows us to use dynamic dispatch, but we have to explicitly ask
-for it.
+幸いなことに、Rustは動的ディスパッチの使用を許可していますが、明示的に要求する必要があります。
 
-## Advantages
+## 利点
 
-We do not need to allocate anything on the heap. Neither do we need to
-initialize something we won't use later, nor do we need to monomorphize the
-whole code that follows to work with both `File` or `Stdin`.
+ヒープ上に何も割り当てる必要はありません。また、後で使用しないものを初期化する必要もなく、`File`または`Stdin`の両方で動作するように後続のコード全体を単相化する必要もありません。
 
-## Disadvantages
+## 欠点
 
-Before Rust 1.79.0, the code needed two `let` bindings with deferred
-initialization, which made up more moving parts than the `Box`-based version:
+Rust 1.79.0以前では、コードには遅延初期化を伴う2つの`let`バインディングが必要であり、`Box`ベースのバージョンよりも可動部分が多くなりました：
 
 ```rust,ignore
 // We still need to ascribe the type for dynamic dispatch.
@@ -61,29 +50,19 @@ let readable: Box<dyn io::Read> = if arg == "-" {
 // Read from `readable` here.
 ```
 
-Luckily, this disadvantage is now gone. Yay!
+幸いなことに、この欠点は現在解消されています。やった！
 
-## Discussion
+## 議論
 
-Since Rust 1.79.0, the compiler will automatically extend the lifetimes of
-temporary values within `&` or `&mut` as long as possible within the scope of
-the function.
+Rust 1.79.0以降、コンパイラは関数のスコープ内で可能な限り`&`または`&mut`内の一時的な値のライフタイムを自動的に延長します。
 
-This means we can simply use a `&mut` value here without worrying about placing
-the contents into some `let` binding (which would have been needed for deferred
-initialization, which was the solution used before that change).
+これは、遅延初期化に必要だった`let`バインディングに内容を配置することを心配せずに、ここで単純に`&mut`値を使用できることを意味します（これはその変更前に使用されていた解決策でした）。
 
-We still have a place for each value (even if that place is temporary), the
-compiler knows the size of each value and each borrowed value outlives all
-references borrowed from it.
+各値に対する場所（その場所が一時的であっても）はまだあり、コンパイラは各値のサイズを知っており、各借用された値はそこから借用されたすべての参照よりも長生きします。
 
-## See also
+## 参照
 
-- [Finalisation in destructors](dtor-finally.md) and
-  [RAII guards](../patterns/behavioural/RAII.md) can benefit from tight control
-  over lifetimes.
-- For conditionally filled `Option<&T>`s of (mutable) references, one can
-  initialize an `Option<T>` directly and use its [`.as_ref()`] method to get an
-  optional reference.
+- [デストラクタでのファイナライゼーション](dtor-finally.md)と[RAIIガード](../patterns/behavioural/RAII.md)は、ライフタイムの厳密な制御から恩恵を受けることができます。
+- 条件付きで埋められた（可変）参照の`Option<&T>`については、`Option<T>`を直接初期化し、その[`.as_ref()`]メソッドを使用してオプショナル参照を取得できます。
 
 [`.as_ref()`]: https://doc.rust-lang.org/std/option/enum.Option.html#method.as_ref
