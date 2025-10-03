@@ -1,17 +1,14 @@
-# Pass variables to closure
+# クロージャに変数を渡す
 
-## Description
+## 説明
 
-By default, closures capture their environment by borrowing. Or you can use a
-`move`-closure to move the whole environment. However, often you want to move
-just some variables to the closure, give it a copy of some data, pass by
-reference, or perform some other transformation.
+デフォルトでは、クロージャは環境を借用してキャプチャします。または、`move`クロージャを使用して環境全体をムーブすることもできます。しかし、多くの場合、一部の変数だけをクロージャにムーブしたり、データのコピーを渡したり、参照で渡したり、その他の変換を行いたいことがあります。
 
-Use variable rebinding in a separate scope for that.
+そのためには、別のスコープで変数の再束縛を使用します。
 
-## Example
+## 例
 
-Use
+以下のように使用します。
 
 ```rust
 use std::rc::Rc;
@@ -29,7 +26,7 @@ let closure = {
 };
 ```
 
-instead of
+以下の代わりに
 
 ```rust
 use std::rc::Rc;
@@ -45,15 +42,12 @@ let closure = move || {
 };
 ```
 
-## Advantages
+## 利点
 
-Copied data are grouped together with the closure definition, so their purpose
-is more clear, and they will be dropped immediately even if they are not
-consumed by the closure.
+コピーされたデータはクロージャの定義とともにグループ化されるため、その目的がより明確になります。また、クロージャで消費されない場合でも、すぐにドロップされます。
 
-The closure uses the same variable names as the surrounding code, whether data
-are copied or moved.
+クロージャは、データがコピーされたかムーブされたかにかかわらず、周囲のコードと同じ変数名を使用します。
 
-## Disadvantages
+## 欠点
 
-Additional indentation of the closure body.
+クロージャ本体の追加のインデント。
