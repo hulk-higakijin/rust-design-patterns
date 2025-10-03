@@ -1,22 +1,18 @@
-# Error Handling in FFI
+# FFIにおけるエラーハンドリング
 
-## Description
+## 説明
 
-In foreign languages like C, errors are represented by return codes. However,
-Rust's type system allows much more rich error information to be captured and
-propagated through a full type.
+C言語のような外部言語では、エラーはリターンコードで表現されます。しかし、Rustの型システムでは、より豊富なエラー情報を完全な型として捕捉し、伝播させることができます。
 
-This best practice shows different kinds of error codes, and how to expose them
-in a usable way:
+このベストプラクティスでは、さまざまな種類のエラーコードと、それらを使いやすい形で公開する方法を示します：
 
-1. Flat Enums should be converted to integers and returned as codes.
-2. Structured Enums should be converted to an integer code with a string error
-   message for detail.
-3. Custom Error Types should become "transparent", with a C representation.
+1. フラットな列挙型は整数に変換し、コードとして返すべきです。
+2. 構造化された列挙型は、詳細情報として文字列エラーメッセージを持つ整数コードに変換すべきです。
+3. カスタムエラー型は、C表現を持つ「透過的」なものにすべきです。
 
-## Code Example
+## コード例
 
-### Flat Enums
+### フラットな列挙型
 
 ```rust,ignore
 enum DatabaseError {
@@ -32,7 +28,7 @@ impl From<DatabaseError> for libc::c_int {
 }
 ```
 
-### Structured Enums
+### 構造化された列挙型
 
 ```rust,ignore
 pub mod errors {
@@ -96,7 +92,7 @@ pub mod c_api {
 }
 ```
 
-### Custom Error Types
+### カスタムエラー型
 
 ```rust,ignore
 struct ParseError {
@@ -125,12 +121,10 @@ impl From<ParseError> for parse_error {
 }
 ```
 
-## Advantages
+## 利点
 
-This ensures that the foreign language has clear access to error information
-while not compromising the Rust code's API at all.
+これにより、外部言語がエラー情報に明確にアクセスできるようになり、同時にRustコードのAPIを一切損なうことがありません。
 
-## Disadvantages
+## 欠点
 
-It's a lot of typing, and some types may not be able to be converted easily to
-C.
+記述量が多くなり、一部の型はC言語に簡単には変換できない場合があります。
