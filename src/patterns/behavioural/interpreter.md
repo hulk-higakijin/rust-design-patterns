@@ -1,38 +1,28 @@
 # Interpreter
 
-## Description
+## 説明
 
-If a problem occurs very often and requires long and repetitive steps to solve
-it, then the problem instances might be expressed in a simple language and an
-interpreter object could solve it by interpreting the sentences written in this
-simple language.
+問題が頻繁に発生し、解決するために長く反復的な手順が必要な場合、問題のインスタンスを単純な言語で表現し、インタープリタオブジェクトがこの単純な言語で書かれた文を解釈することで問題を解決できます。
 
-Basically, for any kind of problems we define:
+基本的に、あらゆる種類の問題に対して以下を定義します：
 
-- A
-  [domain specific language](https://en.wikipedia.org/wiki/Domain-specific_language),
-- A grammar for this language,
-- An interpreter that solves the problem instances.
+- [ドメイン固有言語](https://en.wikipedia.org/wiki/Domain-specific_language)
+- この言語の文法
+- 問題インスタンスを解決するインタープリタ
 
-## Motivation
+## 動機
 
-Our goal is to translate simple mathematical expressions into postfix
-expressions (or
-[Reverse Polish notation](https://en.wikipedia.org/wiki/Reverse_Polish_notation))
-For simplicity, our expressions consist of ten digits `0`, ..., `9` and two
-operations `+`, `-`. For example, the expression `2 + 4` is translated into
-`2 4 +`.
+私たちの目標は、単純な数式を後置記法（または[逆ポーランド記法](https://en.wikipedia.org/wiki/Reverse_Polish_notation)）に変換することです。
+簡単にするため、式は10個の数字 `0`, ..., `9` と2つの演算子 `+`, `-` で構成されます。例えば、式 `2 + 4` は `2 4 +` に変換されます。
 
-## Context Free Grammar for our problem
+## 問題の文脈自由文法
 
-Our task is translating infix expressions into postfix ones. Let's define a
-context free grammar for a set of infix expressions over `0`, ..., `9`, `+`, and
-`-`, where:
+タスクは中置式を後置式に変換することです。`0`, ..., `9`, `+`, `-` に対する中置式の集合の文脈自由文法を定義しましょう：
 
-- Terminal symbols: `0`, `...`, `9`, `+`, `-`
-- Non-terminal symbols: `exp`, `term`
-- Start symbol is `exp`
-- And the following are production rules
+- 終端記号: `0`, `...`, `9`, `+`, `-`
+- 非終端記号: `exp`, `term`
+- 開始記号は `exp`
+- そして以下が生成規則です
 
 ```ignore
 exp -> exp + term
@@ -41,17 +31,11 @@ exp -> term
 term -> 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9
 ```
 
-**NOTE:** This grammar should be further transformed depending on what we are
-going to do with it. For example, we might need to remove left recursion. For
-more details please see
-[Compilers: Principles,Techniques, and Tools](https://en.wikipedia.org/wiki/Compilers:_Principles,_Techniques,_and_Tools)
-(aka Dragon Book).
+**注意:** この文法は、何をするかによってさらに変換する必要があります。例えば、左再帰を除去する必要があるかもしれません。詳細については、[Compilers: Principles,Techniques, and Tools](https://en.wikipedia.org/wiki/Compilers:_Principles,_Techniques,_and_Tools)（ドラゴンブックとも呼ばれる）を参照してください。
 
-## Solution
+## 解決策
 
-We simply implement a recursive descent parser. For simplicity's sake, the code
-panics when an expression is syntactically wrong (for example `2-34` or `2+5-`
-are wrong according to the grammar definition).
+単純に再帰下降パーサーを実装します。簡単にするため、式が構文的に間違っている場合（例えば、文法定義によると `2-34` や `2+5-` は間違っています）、コードはパニックします。
 
 ```rust
 pub struct Interpreter<'a> {
@@ -102,20 +86,11 @@ pub fn main() {
 }
 ```
 
-## Discussion
+## 議論
 
-There may be a wrong perception that the Interpreter design pattern is about
-design grammars for formal languages and implementation of parsers for these
-grammars. In fact, this pattern is about expressing problem instances in a more
-specific way and implementing functions/classes/structs that solve these problem
-instances. Rust language has `macro_rules!` that allow us to define special
-syntax and rules on how to expand this syntax into source code.
+Interpreterデザインパターンが形式言語の文法設計とこれらの文法のパーサーの実装に関するものだという誤った認識があるかもしれません。実際、このパターンは問題インスタンスをより具体的な方法で表現し、これらの問題インスタンスを解決する関数/クラス/構造体を実装することに関するものです。Rust言語には `macro_rules!` があり、特別な構文とこの構文をソースコードに展開する方法のルールを定義できます。
 
-In the following example we create a simple `macro_rules!` that computes
-[Euclidean length](https://en.wikipedia.org/wiki/Euclidean_distance) of `n`
-dimensional vectors. Writing `norm!(x,1,2)` might be easier to express and more
-efficient than packing `x,1,2` into a `Vec` and calling a function computing the
-length.
+次の例では、`n` 次元ベクトルの[ユークリッド長](https://en.wikipedia.org/wiki/Euclidean_distance)を計算する単純な `macro_rules!` を作成します。`norm!(x,1,2)` と書く方が、`x,1,2` を `Vec` にパックして長さを計算する関数を呼び出すよりも表現しやすく、効率的かもしれません。
 
 ```rust
 macro_rules! norm {
@@ -141,7 +116,7 @@ fn main() {
 }
 ```
 
-## See also
+## 参照
 
 - [Interpreter pattern](https://en.wikipedia.org/wiki/Interpreter_pattern)
 - [Context free grammar](https://en.wikipedia.org/wiki/Context-free_grammar)
