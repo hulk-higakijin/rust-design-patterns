@@ -1,17 +1,14 @@
-# Easy doc initialization
+# 簡単なドキュメント初期化
 
-## Description
+## 説明
 
-If a struct takes significant effort to initialize when writing docs, it can be
-quicker to wrap your example with a helper function which takes the struct as an
-argument.
+ドキュメントを書く際に構造体の初期化に大きな労力がかかる場合、構造体を引数として受け取るヘルパー関数で例をラップすると、より迅速に記述できます。
 
-## Motivation
+## 動機
 
-Sometimes there is a struct with multiple or complicated parameters and several
-methods. Each of these methods should have examples.
+複数または複雑なパラメータといくつかのメソッドを持つ構造体が存在することがあります。これらの各メソッドには例が必要です。
 
-For example:
+例えば：
 
 ````rust,ignore
 struct Connection {
@@ -42,11 +39,9 @@ impl Connection {
 }
 ````
 
-## Example
+## 例
 
-Instead of typing all of this boilerplate to create a `Connection` and
-`Request`, it is easier to just create a wrapping helper function which takes
-them as arguments:
+`Connection` と `Request` を作成するためのこのような定型文を全て記述する代わりに、それらを引数として受け取るラッピングヘルパー関数を作成する方が簡単です：
 
 ````rust,ignore
 struct Connection {
@@ -70,26 +65,18 @@ impl Connection {
 }
 ````
 
-**Note** in the above example the line `assert!(response.is_ok());` will not
-actually run while testing because it is inside a function which is never
-invoked.
+**注意** 上記の例では、`assert!(response.is_ok());` という行は、呼び出されることのない関数の内部にあるため、テスト中に実際には実行されません。
 
-## Advantages
+## 利点
 
-This is much more concise and avoids repetitive code in examples.
+これははるかに簡潔で、例の中の繰り返しコードを避けることができます。
 
-## Disadvantages
+## 欠点
 
-As example is in a function, the code will not be tested. Though it will still
-be checked to make sure it compiles when running a `cargo test`. So this pattern
-is most useful when you need `no_run`. With this, you do not need to add
-`no_run`.
+例が関数内にあるため、コードはテストされません。ただし、`cargo test` の実行時にコンパイルできることは確認されます。そのため、このパターンは `no_run` が必要な場合に最も有用です。これを使用すれば、`no_run` を追加する必要はありません。
 
-## Discussion
+## 議論
 
-If assertions are not required this pattern works well.
+アサーションが必要ない場合、このパターンはうまく機能します。
 
-If they are, an alternative can be to create a public method to create a helper
-instance which is annotated with `#[doc(hidden)]` (so that users won't see it).
-Then this method can be called inside of rustdoc because it is part of the
-crate's public API.
+アサーションが必要な場合、代替案として `#[doc(hidden)]` で注釈されたヘルパーインスタンスを作成する公開メソッドを作成することができます（ユーザーには表示されません）。このメソッドはクレートの公開 API の一部であるため、rustdoc 内で呼び出すことができます。
