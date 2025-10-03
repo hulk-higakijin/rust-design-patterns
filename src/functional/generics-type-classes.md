@@ -1,55 +1,26 @@
-# Generics as Type Classes
+# ジェネリクスを型クラスとして使用する
 
-## Description
+## 説明
 
-Rust's type system is designed more like functional languages (like Haskell)
-rather than imperative languages (like Java and C++). As a result, Rust can turn
-many kinds of programming problems into "static typing" problems. This is one of
-the biggest wins of choosing a functional language, and is critical to many of
-Rust's compile time guarantees.
+Rustの型システムは、命令型言語(JavaやC++など)よりも関数型言語(Haskellなど)のように設計されています。その結果、Rustは多くの種類のプログラミング問題を「静的型付け」の問題に変換できます。これは関数型言語を選択する最大のメリットの1つであり、Rustのコンパイル時保証の多くにとって重要です。
 
-A key part of this idea is the way generic types work. In C++ and Java, for
-example, generic types are a meta-programming construct for the compiler.
-`vector<int>` and `vector<char>` in C++ are just two different copies of the
-same boilerplate code for a `vector` type (known as a `template`) with two
-different types filled in.
+この考え方の重要な部分は、ジェネリック型の動作方法です。例えばC++やJavaでは、ジェネリック型はコンパイラのためのメタプログラミング構造です。C++の`vector<int>`と`vector<char>`は、`vector`型(テンプレートとして知られる)の同じボイラープレートコードを2つの異なる型で埋めた、単なる2つの異なるコピーです。
 
-In Rust, a generic type parameter creates what is known in functional languages
-as a "type class constraint", and each different parameter filled in by an end
-user *actually changes the type*. In other words, `Vec<isize>` and `Vec<char>`
-*are two different types*, which are recognized as distinct by all parts of the
-type system.
+Rustでは、ジェネリック型パラメータは関数型言語で「型クラス制約」として知られるものを作成し、エンドユーザーによって埋められる各異なるパラメータは*実際に型を変更します*。言い換えれば、`Vec<isize>`と`Vec<char>`は*2つの異なる型*であり、型システムのすべての部分によって区別されます。
 
-This is called **monomorphization**, where different types are created from
-**polymorphic** code. This special behavior requires `impl` blocks to specify
-generic parameters. Different values for the generic type cause different types,
-and different types can have different `impl` blocks.
+これは**単相化(monomorphization)**と呼ばれ、**多相的(polymorphic)**なコードから異なる型が作成されます。この特別な動作では、`impl`ブロックでジェネリックパラメータを指定する必要があります。ジェネリック型の異なる値は異なる型を引き起こし、異なる型は異なる`impl`ブロックを持つことができます。
 
-In object-oriented languages, classes can inherit behavior from their parents.
-However, this allows the attachment of not only additional behavior to
-particular members of a type class, but extra behavior as well.
+オブジェクト指向言語では、クラスは親から動作を継承できます。しかし、これにより型クラスの特定のメンバーに追加の動作だけでなく、追加の振る舞いも付加できます。
 
-The nearest equivalent is the runtime polymorphism in Javascript and Python,
-where new members can be added to objects willy-nilly by any constructor.
-However, unlike those languages, all of Rust's additional methods can be type
-checked when they are used, because their generics are statically defined. That
-makes them more usable while remaining safe.
+最も近い同等物は、JavaScriptやPythonの実行時多相性です。これらの言語では、任意のコンストラクタによってオブジェクトに新しいメンバーを自由に追加できます。しかし、これらの言語とは異なり、Rustのすべての追加メソッドは使用時に型チェックできます。なぜなら、ジェネリクスが静的に定義されているからです。これにより、安全性を保ちながらより使いやすくなります。
 
-## Example
+## 例
 
-Suppose you are designing a storage server for a series of lab machines. Because
-of the software involved, there are two different protocols you need to support:
-BOOTP (for PXE network boot), and NFS (for remote mount storage).
+一連の研究室マシン用のストレージサーバーを設計しているとします。関連するソフトウェアのため、サポートする必要がある2つの異なるプロトコルがあります: BOOTP(PXEネットワークブート用)とNFS(リモートマウントストレージ用)です。
 
-Your goal is to have one program, written in Rust, which can handle both of
-them. It will have protocol handlers and listen for both kinds of requests. The
-main application logic will then allow a lab administrator to configure storage
-and security controls for the actual files.
+目標は、Rustで書かれた1つのプログラムで両方を処理できるようにすることです。プロトコルハンドラを持ち、両方の種類のリクエストをリッスンします。メインアプリケーションロジックは、研究室管理者が実際のファイルのストレージとセキュリティコントロールを設定できるようにします。
 
-The requests from machines in the lab for files contain the same basic
-information, no matter what protocol they came from: an authentication method,
-and a file name to retrieve. A straightforward implementation would look
-something like this:
+研究室のマシンからのファイルリクエストには、どのプロトコルから来たかに関係なく、同じ基本情報が含まれています: 認証方法と取得するファイル名です。単純な実装は次のようになります:
 
 ```rust,ignore
 enum AuthInfo {
@@ -63,16 +34,11 @@ struct FileDownloadRequest {
 }
 ```
 
-This design might work well enough. But now suppose you needed to support adding
-metadata that was *protocol specific*. For example, with NFS, you wanted to
-determine what their mount point was in order to enforce additional security
-rules.
+この設計は十分にうまく機能するかもしれません。しかし今、*プロトコル固有の*メタデータを追加する必要があるとします。例えば、NFSでは、追加のセキュリティルールを適用するためにマウントポイントを特定したいとします。
 
-The way the current struct is designed leaves the protocol decision until
-runtime. That means any method that applies to one protocol and not the other
-requires the programmer to do a runtime check.
+現在の構造体が設計されている方法では、プロトコルの決定は実行時まで残されます。つまり、一方のプロトコルには適用され他方には適用されないメソッドでは、プログラマが実行時チェックを行う必要があります。
 
-Here is how getting an NFS mount point would look:
+NFSマウントポイントを取得する方法は次のようになります:
 
 ```rust,ignore
 struct FileDownloadRequest {
@@ -92,19 +58,13 @@ impl FileDownloadRequest {
 }
 ```
 
-Every caller of `mount_point()` must check for `None` and write code to handle
-it. This is true even if they know only NFS requests are ever used in a given
-code path!
+`mount_point()`のすべての呼び出し元は`None`をチェックし、それを処理するコードを書かなければなりません。これは、特定のコードパスでNFSリクエストのみが使用されることを知っている場合でも当てはまります!
 
-It would be far more optimal to cause a compile-time error if the different
-request types were confused. After all, the entire path of the user's code,
-including what functions from the library they use, will know whether a request
-is an NFS request or a BOOTP request.
+異なるリクエストタイプが混同された場合にコンパイル時エラーを引き起こす方が、はるかに最適です。結局のところ、ライブラリから使用する関数を含むユーザーコードの全体のパスは、リクエストがNFSリクエストかBOOTPリクエストかを知っているでしょう。
 
-In Rust, this is actually possible! The solution is to *add a generic type* in
-order to split the API.
+Rustでは、これは実際に可能です! 解決策は、APIを分割するために*ジェネリック型を追加する*ことです。
 
-Here is what that looks like:
+これは次のようになります:
 
 ```rust
 use std::path::{Path, PathBuf};
@@ -187,7 +147,7 @@ fn main() {
 }
 ```
 
-With this approach, if the user were to make a mistake and use the wrong type;
+このアプローチでは、ユーザーが誤って間違った型を使用した場合:
 
 ```rust,ignore
 fn main() {
@@ -202,79 +162,58 @@ fn main() {
 }
 ```
 
-They would get a syntax error. The type `FileDownloadRequest<Bootp>` does not
-implement `mount_point()`, only the type `FileDownloadRequest<Nfs>` does. And
-that is created by the NFS module, not the BOOTP module of course!
+構文エラーが発生します。型`FileDownloadRequest<Bootp>`は`mount_point()`を実装していません。`FileDownloadRequest<Nfs>`型のみが実装しています。そしてそれはもちろん、BOOTPモジュールではなくNFSモジュールによって作成されます!
 
-## Advantages
+## 利点
 
-First, it allows fields that are common to multiple states to be de-duplicated.
-By making the non-shared fields generic, they are implemented once.
+第一に、複数の状態に共通するフィールドを重複排除できます。共有されないフィールドをジェネリックにすることで、一度実装されます。
 
-Second, it makes the `impl` blocks easier to read, because they are broken down
-by state. Methods common to all states are typed once in one block, and methods
-unique to one state are in a separate block.
+第二に、`impl`ブロックが状態ごとに分解されるため、読みやすくなります。すべての状態に共通するメソッドは1つのブロックに一度だけ記述され、1つの状態に固有のメソッドは別のブロックにあります。
 
-Both of these mean there are fewer lines of code, and they are better organized.
+これらの両方により、コード行数が減り、より良く整理されます。
 
-## Disadvantages
+## 欠点
 
-This currently increases the size of the binary, due to the way monomorphization
-is implemented in the compiler. Hopefully the implementation will be able to
-improve in the future.
+現在、これはコンパイラでの単相化の実装方法により、バイナリのサイズを増加させます。将来、実装が改善できることを期待しています。
 
-## Alternatives
+## 代替案
 
-- If a type seems to need a "split API" due to construction or partial
-  initialization, consider the
-  [Builder Pattern](../patterns/creational/builder.md) instead.
+- 構築または部分的な初期化のために型が「分割API」を必要とするように見える場合は、代わりに[ビルダーパターン](../patterns/creational/builder.md)を検討してください。
 
-- If the API between types does not change -- only the behavior does -- then the
-  [Strategy Pattern](../patterns/behavioural/strategy.md) is better used
-  instead.
+- 型間でAPIが変わらず、動作のみが変わる場合は、代わりに[ストラテジーパターン](../patterns/behavioural/strategy.md)を使用する方が良いです。
 
-## See also
+## 関連項目
 
-This pattern is used throughout the standard library:
+このパターンは標準ライブラリ全体で使用されています:
 
-- `Vec<u8>` can be cast from a String, unlike every other type of `Vec<T>`.[^1]
-- Iterators can be cast into a binary heap, but only if they contain a type that
-  implements the `Ord` trait.[^2]
-- The `to_string` method was specialized for `Cow` only of type `str`.[^3]
+- `Vec<u8>`はStringからキャストできますが、他のすべての型の`Vec<T>`はできません。[^1]
+- イテレータはバイナリヒープにキャストできますが、`Ord`トレイトを実装する型を含む場合のみです。[^2]
+- `to_string`メソッドは、型`str`の`Cow`にのみ特殊化されました。[^3]
 
-It is also used by several popular crates to allow API flexibility:
+また、API柔軟性を可能にするために、いくつかの人気のあるクレートでも使用されています:
 
-- The `embedded-hal` ecosystem used for embedded devices makes extensive use of
-  this pattern. For example, it allows statically verifying the configuration of
-  device registers used to control embedded pins. When a pin is put into a mode,
-  it returns a `Pin<MODE>` struct, whose generic determines the functions usable
-  in that mode, which are not on the `Pin` itself. [^4]
+- 組み込みデバイス用に使用される`embedded-hal`エコシステムは、このパターンを広範に使用しています。例えば、組み込みピンを制御するために使用されるデバイスレジスタの設定を静的に検証できます。ピンがモードに設定されると、`Pin<MODE>`構造体を返し、そのジェネリックがそのモードで使用可能な関数を決定します。これらの関数は`Pin`自体にはありません。[^4]
 
-- The `hyper` HTTP client library uses this to expose rich APIs for different
-  pluggable requests. Clients with different connectors have different methods
-  on them as well as different trait implementations, while a core set of
-  methods apply to any connector. [^5]
+- `hyper` HTTPクライアントライブラリは、異なるプラガブルリクエストのためにリッチなAPIを公開するためにこれを使用しています。異なるコネクタを持つクライアントは、それらに異なるメソッドと異なるトレイト実装を持ちますが、コアメソッドのセットは任意のコネクタに適用されます。[^5]
 
-- The "type state" pattern -- where an object gains and loses API based on an
-  internal state or invariant -- is implemented in Rust using the same basic
-  concept, and a slightly different technique. [^6]
+- 「型状態」パターン -- オブジェクトが内部状態や不変条件に基づいてAPIを獲得・喪失する -- は、同じ基本概念と若干異なる手法を使用してRustで実装されています。[^6]
 
-[^1]: See:
+[^1]: 参照:
 [impl From\<CString\> for Vec\<u8\>](https://doc.rust-lang.org/1.59.0/src/std/ffi/c_str.rs.html#803-811)
 
-[^2]: See:
+[^2]: 参照:
 [impl\<T: Ord\> FromIterator\<T\> for BinaryHeap\<T\>](https://web.archive.org/web/20201030132806/https://doc.rust-lang.org/stable/src/alloc/collections/binary_heap.rs.html#1330-1335)
 
-[^3]: See:
+[^3]: 参照:
 [impl\<'\_\> ToString for Cow\<'\_, str>](https://doc.rust-lang.org/stable/src/alloc/string.rs.html#2235-2240)
 
-[^4]: Example:
+[^4]: 例:
 [https://docs.rs/stm32f30x-hal/0.1.0/stm32f30x_hal/gpio/gpioa/struct.PA0.html](https://docs.rs/stm32f30x-hal/0.1.0/stm32f30x_hal/gpio/gpioa/struct.PA0.html)
 
-[^5]: See:
+[^5]: 参照:
 [https://docs.rs/hyper/0.14.5/hyper/client/struct.Client.html](https://docs.rs/hyper/0.14.5/hyper/client/struct.Client.html)
 
-[^6]: See:
+[^6]: 参照:
 [The Case for the Type State Pattern](https://web.archive.org/web/20210325065112/https://www.novatec-gmbh.de/en/blog/the-case-for-the-typestate-pattern-the-typestate-pattern-itself/)
-and
+および
 [Rusty Typestate Series (an extensive thesis)](https://web.archive.org/web/20210328164854/https://rustype.github.io/notes/notes/rust-typestate-series/rust-typestate-index)
