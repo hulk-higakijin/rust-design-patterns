@@ -1,55 +1,35 @@
-# Object-Based APIs
+# オブジェクトベースAPI
 
-## Description
+## 説明
 
-When designing APIs in Rust which are exposed to other languages, there are some
-important design principles which are contrary to normal Rust API design:
+他言語に公開されるRust APIを設計する際、通常のRust API設計とは反対の重要な設計原則があります：
 
-1. All Encapsulated types should be *owned* by Rust, *managed* by the user, and
-   *opaque*.
-2. All Transactional data types should be *owned* by the user, and
-   *transparent*.
-3. All library behavior should be functions acting upon Encapsulated types.
-4. All library behavior should be encapsulated into types not based on
-   structure, but *provenance/lifetime*.
+1. すべてのカプセル化された型は、Rustが*所有*し、ユーザーが*管理*し、*不透明*であるべきです。
+2. すべてのトランザクショナルデータ型は、ユーザーが*所有*し、*透過的*であるべきです。
+3. すべてのライブラリの振る舞いは、カプセル化された型に作用する関数であるべきです。
+4. すべてのライブラリの振る舞いは、構造ではなく*由来/ライフタイム*に基づく型にカプセル化されるべきです。
 
-## Motivation
+## 動機
 
-Rust has built-in FFI support to other languages. It does this by providing a
-way for crate authors to provide C-compatible APIs through different ABIs
-(though that is unimportant to this practice).
+Rustには他言語へのFFIサポートが組み込まれています。これは、クレート作成者が異なるABIを通じてC互換APIを提供する方法を提供することで実現されています（この実践においては重要ではありませんが）。
 
-Well-designed Rust FFI follows C API design principles, while compromising the
-design in Rust as little as possible. There are three goals with any foreign
-API:
+よく設計されたRust FFIは、C API設計原則に従いつつ、可能な限りRust側の設計を妥協しないようにします。外部APIには3つの目標があります：
 
-1. Make it easy to use in the target language.
-2. Avoid the API dictating internal unsafety on the Rust side as much as
-   possible.
-3. Keep the potential for memory unsafety and Rust `undefined behaviour` as
-   small as possible.
+1. ターゲット言語で使いやすくする。
+2. API がRust側の内部的な unsafe を可能な限り強制しないようにする。
+3. メモリ安全性違反とRustの`未定義動作`の可能性を可能な限り小さく保つ。
 
-Rust code must trust the memory safety of the foreign language beyond a certain
-point. However, every bit of `unsafe` code on the Rust side is an opportunity
-for bugs, or to exacerbate `undefined behaviour`.
+Rustコードは、ある時点を超えて外部言語のメモリ安全性を信頼する必要があります。しかし、Rust側のすべての`unsafe`コードは、バグの機会であり、`未定義動作`を悪化させる機会でもあります。
 
-For example, if a pointer provenance is wrong, that may be a segfault due to
-invalid memory access. But if it is manipulated by unsafe code, it could become
-full-blown heap corruption.
+例えば、ポインタの由来が間違っている場合、無効なメモリアクセスによるセグメンテーション違反になる可能性があります。しかし、unsafeコードによって操作されると、完全なヒープ破壊になる可能性があります。
 
-The Object-Based API design allows for writing shims that have good memory
-safety characteristics, and a clean boundary of what is safe and what is
-`unsafe`.
+オブジェクトベースAPI設計により、良好なメモリ安全性特性を持つshimを記述でき、安全なものと`unsafe`なものの明確な境界を作ることができます。
 
-## Code Example
+## コード例
 
-The POSIX standard defines the API to access an on-file database, known as
-[DBM](https://web.archive.org/web/20210105035602/https://www.mankier.com/0p/ndbm.h).
-It is an excellent example of an "object-based" API.
+POSIX標準は、[DBM](https://web.archive.org/web/20210105035602/https://www.mankier.com/0p/ndbm.h)として知られるファイルベースのデータベースにアクセスするためのAPIを定義しています。これは「オブジェクトベース」APIの優れた例です。
 
-Here is the definition in C, which hopefully should be easy to read for those
-involved in FFI. The commentary below should help explain it for those who miss
-the subtleties.
+以下はCでの定義で、FFIに関わる方々には読みやすいはずです。下記の解説は、細かい点を見逃した方々の理解を助けるでしょう。
 
 ```C
 struct DBM;
@@ -66,69 +46,39 @@ DBM    *dbm_open(const char *, int, mode_t);
 int     dbm_store(DBM *, datum, datum, int);
 ```
 
-This API defines two types: `DBM` and `datum`.
+このAPIは2つの型を定義しています：`DBM`と`datum`。
 
-The `DBM` type was called an "encapsulated" type above. It is designed to
-contain internal state, and acts as an entry point for the library's behavior.
+`DBM`型は、上記で「カプセル化された」型と呼ばれました。これは内部状態を含むように設計されており、ライブラリの振る舞いのエントリーポイントとして機能します。
 
-It is completely opaque to the user, who cannot create a `DBM` themselves since
-they don't know its size or layout. Instead, they must call `dbm_open`, and that
-only gives them *a pointer to one*.
+これはユーザーにとって完全に不透明であり、ユーザーはそのサイズやレイアウトを知らないため、`DBM`を自分で作成することはできません。代わりに、`dbm_open`を呼び出す必要があり、それは*ポインタのみ*を提供します。
 
-This means all `DBM`s are "owned" by the library in a Rust sense. The internal
-state of unknown size is kept in memory controlled by the library, not the user.
-The user can only manage its life cycle with `open` and `close`, and perform
-operations on it with the other functions.
+これは、すべての`DBM`がRustの意味でライブラリによって「所有」されていることを意味します。未知のサイズの内部状態は、ユーザーではなくライブラリによって制御されるメモリに保持されます。ユーザーは`open`と`close`でそのライフサイクルを管理し、他の関数で操作を実行することしかできません。
 
-The `datum` type was called a "transactional" type above. It is designed to
-facilitate the exchange of information between the library and its user.
+`datum`型は、上記で「トランザクショナル」型と呼ばれました。これはライブラリとユーザー間の情報交換を容易にするように設計されています。
 
-The database is designed to store "unstructured data", with no pre-defined
-length or meaning. As a result, the `datum` is the C equivalent of a Rust slice:
-a bunch of bytes, and a count of how many there are. The main difference is that
-there is no type information, which is what `void` indicates.
+データベースは「非構造化データ」を格納するように設計されており、事前定義された長さや意味はありません。その結果、`datum`はRustスライスに相当するCの等価物です：バイトの塊と、その数のカウント。主な違いは型情報がないことで、これが`void`が示すものです。
 
-Keep in mind that this header is written from the library's point of view. The
-user likely has some type they are using, which has a known size. But the
-library does not care, and by the rules of C casting, any type behind a pointer
-can be cast to `void`.
+このヘッダーはライブラリの視点から書かれていることに注意してください。ユーザーはおそらく既知のサイズを持つ何らかの型を使用しているでしょう。しかし、ライブラリは気にせず、Cのキャストルールにより、ポインタの背後にある任意の型は`void`にキャストできます。
 
-As noted earlier, this type is *transparent* to the user. But also, this type is
-*owned* by the user. This has subtle ramifications, due to that pointer inside
-it. The question is, who owns the memory that pointer points to?
+前述のように、この型はユーザーにとって*透過的*です。しかし、この型はユーザーが*所有*します。これには、内部のポインタのため、微妙な影響があります。問題は、そのポインタが指すメモリを誰が所有するかです。
 
-The answer for best memory safety is, "the user". But in cases such as
-retrieving a value, the user does not know how to allocate it correctly (since
-they don't know how long the value is). In this case, the library code is
-expected to use the heap that the user has access to -- such as the C library
-`malloc` and `free` -- and then *transfer ownership* in the Rust sense.
+メモリ安全性のための最良の答えは「ユーザー」です。しかし、値を取得する場合など、ユーザーは正しく割り当てる方法を知りません（値の長さがわからないため）。この場合、ライブラリコードはユーザーがアクセスできるヒープ（Cライブラリの`malloc`や`free`など）を使用し、Rustの意味で*所有権を移転*することが期待されます。
 
-This may all seem speculative, but this is what a pointer means in C. It means
-the same thing as Rust: "user defined lifetime." The user of the library needs
-to read the documentation in order to use it correctly. That said, there are
-some decisions that have fewer or greater consequences if users do it wrong.
-Minimizing those are what this best practice is about, and the key is to
-*transfer ownership of everything that is transparent*.
+これはすべて推測に見えるかもしれませんが、これがCにおけるポインタの意味です。Rustと同じことを意味します：「ユーザー定義のライフタイム」。ライブラリのユーザーは、正しく使用するためにドキュメントを読んで理解する必要があります。とはいえ、ユーザーが間違えた場合の結果が少ないか大きいかという決定があります。それらを最小化することがこのベストプラクティスの目的であり、鍵は*透過的なすべてのものの所有権を移転すること*です。
 
-## Advantages
+## 利点
 
-This minimizes the number of memory safety guarantees the user must uphold to a
-relatively small number:
+これにより、ユーザーが守らなければならないメモリ安全性保証の数を比較的少数に最小化できます：
 
-1. Do not call any function with a pointer not returned by `dbm_open` (invalid
-   access or corruption).
-2. Do not call any function on a pointer after close (use after free).
-3. The `dptr` on any `datum` must be `NULL`, or point to a valid slice of memory
-   at the advertised length.
+1. `dbm_open`によって返されないポインタで関数を呼び出さない（無効なアクセスまたは破損）。
+2. closeの後にポインタで関数を呼び出さない（解放後の使用）。
+3. 任意の`datum`の`dptr`は`NULL`であるか、宣伝された長さの有効なメモリスライスを指している必要があります。
 
-In addition, it avoids a lot of pointer provenance issues. To understand why,
-let us consider an alternative in some depth: key iteration.
+さらに、多くのポインタ由来の問題を回避します。その理由を理解するために、代替案を詳しく検討しましょう：キーの反復。
 
-Rust is well known for its iterators. When implementing one, the programmer
-makes a separate type with a bounded lifetime to its owner, and implements the
-`Iterator` trait.
+Rustはイテレータでよく知られています。実装する際、プログラマーは所有者に制限されたライフタイムを持つ別の型を作成し、`Iterator`トレイトを実装します。
 
-Here is how iteration would be done in Rust for `DBM`:
+以下は`DBM`に対するRustでの反復の実装です：
 
 ```rust,ignore
 struct Dbm { ... }
@@ -146,8 +96,7 @@ struct DbmKeysIter<'it> {
 impl<'it> Iterator for DbmKeysIter<'it> { ... }
 ```
 
-This is clean, idiomatic, and safe. thanks to Rust's guarantees. However,
-consider what a straightforward API translation would look like:
+これはクリーンで、慣用的で、安全です。Rustの保証のおかげです。しかし、単純なAPI変換がどのように見えるか考えてみましょう：
 
 ```rust,ignore
 #[no_mangle]
@@ -167,12 +116,9 @@ pub extern "C" fn dbm_iter_del(*mut DbmKeysIter) {
 }
 ```
 
-This API loses a key piece of information: the lifetime of the iterator must not
-exceed the lifetime of the `Dbm` object that owns it. A user of the library
-could use it in a way which causes the iterator to outlive the data it is
-iterating on, resulting in reading uninitialized memory.
+このAPIは重要な情報を失います：イテレータのライフタイムは、それを所有する`Dbm`オブジェクトのライフタイムを超えてはなりません。ライブラリのユーザーは、イテレータが反復するデータより長生きするような使い方をする可能性があり、初期化されていないメモリの読み取りを引き起こします。
 
-This example written in C contains a bug that will be explained afterwards:
+Cで書かれたこの例には、後で説明するバグが含まれています：
 
 ```C
 int count_key_sizes(DBM *db) {
@@ -201,62 +147,38 @@ int count_key_sizes(DBM *db) {
 }
 ```
 
-This bug is a classic. Here's what happens when the iterator returns the
-end-of-iteration marker:
+このバグは古典的です。イテレータが反復終了マーカーを返したときに何が起こるかを示します：
 
-1. The loop condition sets `l` to zero, and enters the loop because `0 >= 0`.
-2. The length is incremented, in this case by zero.
-3. The if statement is true, so the database is closed. There should be a break
-   statement here.
-4. The loop condition executes again, causing a `next` call on the closed
-   object.
+1. ループ条件が`l`をゼロに設定し、`0 >= 0`であるためループに入ります。
+2. 長さが増加します。この場合はゼロだけ。
+3. if文が真になるため、データベースが閉じられます。ここにbreak文があるべきです。
+4. ループ条件が再度実行され、閉じられたオブジェクトに対して`next`呼び出しが発生します。
 
-The worst part about this bug? If the Rust implementation was careful, this code
-will work most of the time! If the memory for the `Dbm` object is not
-immediately reused, an internal check will almost certainly fail, resulting in
-the iterator returning a `-1` indicating an error. But occasionally, it will
-cause a segmentation fault, or even worse, nonsensical memory corruption!
+このバグの最悪な部分は？Rust実装が注意深い場合、このコードはほとんどの場合動作します！`Dbm`オブジェクトのメモリがすぐに再利用されなければ、内部チェックがほぼ確実に失敗し、イテレータはエラーを示す`-1`を返します。しかし時折、セグメンテーション違反を引き起こし、さらに悪いことに、意味不明なメモリ破壊を引き起こします！
 
-None of this can be avoided by Rust. From its perspective, it put those objects
-on its heap, returned pointers to them, and gave up control of their lifetimes.
-The C code simply must "play nice".
+これのどれもRustでは回避できません。Rustの観点からは、それらのオブジェクトをヒープに置き、それらへのポインタを返し、それらのライフタイムの制御を放棄しました。Cコードは単に「きちんと振る舞う」必要があります。
 
-The programmer must read and understand the API documentation. While some
-consider that par for the course in C, a good API design can mitigate this risk.
-The POSIX API for `DBM` did this by *consolidating the ownership* of the
-iterator with its parent:
+プログラマーはAPIドキュメントを読んで理解する必要があります。Cではそれが当然と考える人もいますが、良いAPI設計はこのリスクを軽減できます。`DBM`のPOSIX APIは、イテレータの所有権を親と*統合*することでこれを実現しました：
 
 ```C
 datum   dbm_firstkey(DBM *);
 datum   dbm_nextkey(DBM *);
 ```
 
-Thus, all the lifetimes were bound together, and such unsafety was prevented.
+したがって、すべてのライフタイムが結び付けられ、そのような安全性違反が防止されました。
 
-## Disadvantages
+## 欠点
 
-However, this design choice also has a number of drawbacks, which should be
-considered as well.
+しかし、この設計選択には多くの欠点もあり、それも考慮すべきです。
 
-First, the API itself becomes less expressive. With POSIX DBM, there is only one
-iterator per object, and every call changes its state. This is much more
-restrictive than iterators in almost any language, even though it is safe.
-Perhaps with other related objects, whose lifetimes are less hierarchical, this
-limitation is more of a cost than the safety.
+まず、API自体が表現力に欠けるようになります。POSIX DBMでは、オブジェクトごとに1つのイテレータしかなく、すべての呼び出しがその状態を変更します。これは安全ではありますが、ほぼすべての言語のイテレータよりもはるかに制限的です。おそらく他の関連オブジェクトでは、ライフタイムがあまり階層的でない場合、この制限は安全性よりもコストが高くなります。
 
-Second, depending on the relationships of the API's parts, significant design
-effort may be involved. Many of the easier design points have other patterns
-associated with them:
+次に、APIの部分の関係によっては、重要な設計努力が必要になる場合があります。より簡単な設計ポイントの多くには、他のパターンが関連付けられています：
 
-- [Wrapper Type Consolidation](./wrappers.md) groups multiple Rust types
-  together into an opaque "object"
+- [ラッパー型の統合](./wrappers.md)は、複数のRust型を不透明な「オブジェクト」にグループ化します
 
-- [FFI Error Passing](../../idioms/ffi/errors.md) explains error handling with
-  integer codes and sentinel return values (such as `NULL` pointers)
+- [FFIエラー処理](../../idioms/ffi/errors.md)は、整数コードとセンチネル戻り値（`NULL`ポインタなど）を使用したエラー処理を説明します
 
-- [Accepting Foreign Strings](../../idioms/ffi/accepting-strings.md) allows
-  accepting strings with minimal unsafe code, and is easier to get right than
-  [Passing Strings to FFI](../../idioms/ffi/passing-strings.md)
+- [外部文字列の受け入れ](../../idioms/ffi/accepting-strings.md)は、最小限のunsafeコードで文字列を受け入れることができ、[FFIへの文字列の受け渡し](../../idioms/ffi/passing-strings.md)よりも正しく実装しやすいです
 
-However, not every API can be done this way. It is up to the best judgement of
-the programmer as to who their audience is.
+しかし、すべてのAPIがこの方法で実行できるわけではありません。対象者が誰であるかは、プログラマーの最善の判断に委ねられています。
