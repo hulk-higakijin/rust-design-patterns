@@ -1,32 +1,20 @@
 # Command
 
-## Description
+## 説明
 
-The basic idea of the Command pattern is to separate out actions into its own
-objects and pass them as parameters.
+Commandパターンの基本的なアイデアは、アクションを独自のオブジェクトとして分離し、それらをパラメータとして渡すことです。
 
-## Motivation
+## 動機
 
-Suppose we have a sequence of actions or transactions encapsulated as objects.
-We want these actions or commands to be executed or invoked in some order later
-at different time. These commands may also be triggered as a result of some
-event. For example, when a user pushes a button, or on arrival of a data packet.
-In addition, these commands might be undoable. This may come in useful for
-operations of an editor. We might want to store logs of executed commands so
-that we could reapply the changes later if the system crashes.
+オブジェクトとしてカプセル化された一連のアクションやトランザクションがあるとします。これらのアクションやコマンドを、異なる時間に何らかの順序で実行または呼び出したいと考えています。これらのコマンドは、イベントの結果としてトリガーされることもあります。例えば、ユーザーがボタンを押したときや、データパケットが到着したときなどです。さらに、これらのコマンドは元に戻すことができる可能性があります。これはエディタの操作などで役立ちます。システムがクラッシュした場合に後で変更を再適用できるように、実行されたコマンドのログを保存したい場合もあります。
 
-## Example
+## 例
 
-Define two database operations `create table` and `add field`. Each of these
-operations is a command which knows how to undo the command, e.g., `drop table`
-and `remove field`. When a user invokes a database migration operation then each
-command is executed in the defined order, and when the user invokes the rollback
-operation then the whole set of commands is invoked in reverse order.
+2つのデータベース操作 `create table` と `add field` を定義します。これらの操作はそれぞれコマンドであり、コマンドを元に戻す方法を知っています。例えば、`drop table` と `remove field` です。ユーザーがデータベースマイグレーション操作を呼び出すと、各コマンドは定義された順序で実行され、ユーザーがロールバック操作を呼び出すと、コマンドのセット全体が逆順で呼び出されます。
 
-## Approach: Using trait objects
+## アプローチ：トレイトオブジェクトの使用
 
-We define a common trait which encapsulates our command with two operations
-`execute` and `rollback`. All command `structs` must implement this trait.
+2つの操作 `execute` と `rollback` でコマンドをカプセル化する共通のトレイトを定義します。すべてのコマンド `structs` はこのトレイトを実装する必要があります。
 
 ```rust
 pub trait Migration {
@@ -92,13 +80,9 @@ fn main() {
 }
 ```
 
-## Approach: Using function pointers
+## アプローチ：関数ポインタの使用
 
-We could follow another approach by creating each individual command as a
-different function and store function pointers to invoke these functions later
-at a different time. Since function pointers implement all three traits `Fn`,
-`FnMut`, and `FnOnce` we could as well pass and store closures instead of
-function pointers.
+各個別のコマンドを異なる関数として作成し、関数ポインタを保存して後で異なる時間にこれらの関数を呼び出すという別のアプローチに従うこともできます。関数ポインタは3つのトレイト `Fn`、`FnMut`、`FnOnce` をすべて実装しているため、関数ポインタの代わりにクロージャを渡して保存することもできます。
 
 ```rust
 type FnPtr = fn() -> String;
@@ -147,10 +131,9 @@ fn main() {
 }
 ```
 
-## Approach: Using `Fn` trait objects
+## アプローチ：`Fn` トレイトオブジェクトの使用
 
-Finally, instead of defining a common command trait we could store each command
-implementing the `Fn` trait separately in vectors.
+最後に、共通のコマンドトレイトを定義する代わりに、`Fn` トレイトを実装する各コマンドをベクタに個別に保存することができます。
 
 ```rust
 type Migration<'a> = Box<dyn Fn() -> &'a str>;
@@ -200,22 +183,13 @@ fn main() {
 }
 ```
 
-## Discussion
+## 議論
 
-If our commands are small and may be defined as functions or passed as a closure
-then using function pointers might be preferable since it does not exploit
-dynamic dispatch. But if our command is a whole struct with a bunch of functions
-and variables defined as separated module then using trait objects would be more
-suitable. A case of application can be found in [`actix`](https://actix.rs/),
-which uses trait objects when it registers a handler function for routes. In
-case of using `Fn` trait objects we can create and use commands in the same way
-as we used in case of function pointers.
+コマンドが小さく、関数として定義されるか、クロージャとして渡される場合は、動的ディスパッチを利用しないため、関数ポインタを使用する方が望ましいかもしれません。しかし、コマンドが多数の関数と変数を持つ構造体全体であり、分離されたモジュールとして定義されている場合は、トレイトオブジェクトを使用する方が適しています。アプリケーションの例は [`actix`](https://actix.rs/) にあり、ルートのハンドラ関数を登録する際にトレイトオブジェクトを使用しています。`Fn` トレイトオブジェクトを使用する場合、関数ポインタを使用した場合と同じ方法でコマンドを作成して使用できます。
 
-As performance, there is always a trade-off between performance and code
-simplicity and organisation. Static dispatch gives faster performance, while
-dynamic dispatch provides flexibility when we structure our application.
+パフォーマンスに関しては、パフォーマンスとコードのシンプルさおよび構成の間には常にトレードオフがあります。静的ディスパッチはより高速なパフォーマンスを提供し、動的ディスパッチはアプリケーションを構造化する際に柔軟性を提供します。
 
-## See also
+## 参照
 
 - [Command pattern](https://en.wikipedia.org/wiki/Command_pattern)
 
