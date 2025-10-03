@@ -1,30 +1,19 @@
-# Design Patterns
+# デザインパターン
 
-[Design patterns](https://en.wikipedia.org/wiki/Software_design_pattern) are
-"general reusable solutions to a commonly occurring problem within a given
-context in software design". Design patterns are a great way to describe the
-culture of a programming language. Design patterns are very language-specific -
-what is a pattern in one language may be unnecessary in another due to a
-language feature, or impossible to express due to a missing feature.
+[デザインパターン](https://en.wikipedia.org/wiki/Software_design_pattern)とは、
+「ソフトウェア設計における特定の文脈で頻繁に発生する問題に対する、汎用的で再利用可能な解決策」です。デザインパターンは、プログラミング言語の文化を表現する優れた方法です。デザインパターンは言語固有のものであり、ある言語でパターンとされるものが、他の言語では言語機能により不要になったり、機能が欠けているために表現できなかったりすることがあります。
 
-If overused, design patterns can add unnecessary complexity to programs.
-However, they are a great way to share intermediate and advanced level knowledge
-about a programming language.
+過度に使用すると、デザインパターンはプログラムに不要な複雑さを追加する可能性があります。
+しかし、プログラミング言語に関する中級から上級レベルの知識を共有する優れた方法でもあります。
 
-## Design patterns in Rust
+## Rustにおけるデザインパターン
 
-Rust has many unique features. These features give us great benefit by removing
-whole classes of problems. Some of them are also patterns that are *unique* to
-Rust.
+Rustには多くのユニークな機能があります。これらの機能は、問題のクラス全体を取り除くことで、大きな利益をもたらします。その中には、Rustに*固有*のパターンもあります。
 
 ## YAGNI
 
-YAGNI is an acronym that stands for `You Aren't Going to Need It`. It's a vital
-software design principle to apply as you write code.
+YAGNIは`You Aren't Going to Need It`（それは必要にならない）の頭字語です。これは、コードを書く際に適用すべき重要なソフトウェア設計の原則です。
 
-> The best code I ever wrote was code I never wrote.
+> 私が書いた最高のコードは、書かなかったコードだ。
 
-If we apply YAGNI to design patterns, we see that the features of Rust allow us
-to throw out many patterns. For instance, there is no need for the
-[strategy pattern](https://en.wikipedia.org/wiki/Strategy_pattern) in Rust
-because we can just use [traits](https://doc.rust-lang.org/book/traits.html).
+デザインパターンにYAGNIを適用すると、Rustの機能により多くのパターンを捨てられることがわかります。例えば、Rustでは[ストラテジーパターン](https://en.wikipedia.org/wiki/Strategy_pattern)は必要ありません。なぜなら、単に[トレイト](https://doc.rust-lang.org/book/traits.html)を使えばよいからです。
