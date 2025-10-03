@@ -1,13 +1,11 @@
-# Constructors
+# コンストラクタ
 
-## Description
+## 説明
 
-Rust does not have constructors as a language construct. Instead, the convention
-is to use an [associated function][associated function] `new` to create an
-object:
+Rustには言語構造としてのコンストラクタはありません。代わりに、オブジェクトを作成するために[関連関数][associated function]である`new`を使用することが慣習となっています：
 
 ````rust
-/// Time in seconds.
+/// 秒単位の時間。
 ///
 /// # Example
 ///
@@ -33,12 +31,12 @@ impl Second {
 }
 ````
 
-## Default Constructors
+## デフォルトコンストラクタ
 
-Rust supports default constructors with the [`Default`][std-default] trait:
+Rustは[`Default`][std-default]トレイトを使用したデフォルトコンストラクタをサポートしています：
 
 ````rust
-/// Time in seconds.
+/// 秒単位の時間。
 ///
 /// # Example
 ///
@@ -64,11 +62,10 @@ impl Default for Second {
 }
 ````
 
-`Default` can also be derived if all types of all fields implement `Default`,
-like they do with `Second`:
+`Default`は、`Second`のように全てのフィールドの型が`Default`を実装している場合、派生させることもできます：
 
 ````rust
-/// Time in seconds.
+/// 秒単位の時間。
 ///
 /// # Example
 ///
@@ -89,25 +86,17 @@ impl Second {
 }
 ````
 
-**Note:** It is common and expected for types to implement both `Default` and an
-empty `new` constructor. `new` is the constructor convention in Rust, and users
-expect it to exist, so if it is reasonable for the basic constructor to take no
-arguments, then it should, even if it is functionally identical to default.
+**注意:** 型が`Default`と空の`new`コンストラクタの両方を実装することは一般的であり、期待されています。`new`はRustにおけるコンストラクタの慣習であり、ユーザーはそれが存在することを期待しているため、基本的なコンストラクタが引数を取らないことが妥当であれば、たとえdefaultと機能的に同一であっても、実装すべきです。
 
-**Hint:** The advantage of implementing or deriving `Default` is that your type
-can now be used where a `Default` implementation is required, most prominently,
-any of the [`*or_default` functions in the standard library][std-or-default].
+**ヒント:** `Default`を実装または派生させる利点は、`Default`実装が必要な場面で型を使用できるようになることです。最も顕著なのは、[標準ライブラリの`*or_default`関数][std-or-default]です。
 
-## See also
+## 参照
 
-- The [default idiom](default.md) for a more in-depth description of the
-  `Default` trait.
+- `Default`トレイトの詳細な説明については[defaultイディオム](default.md)を参照してください。
 
-- The [builder pattern](../patterns/creational/builder.md) for constructing
-  objects where there are multiple configurations.
+- 複数の設定があるオブジェクトを構築する場合は[ビルダーパターン](../patterns/creational/builder.md)を参照してください。
 
-- [API Guidelines/C-COMMON-TRAITS][API Guidelines/C-COMMON-TRAITS] for
-  implementing both, `Default` and `new`.
+- `Default`と`new`の両方を実装することについては[API Guidelines/C-COMMON-TRAITS][API Guidelines/C-COMMON-TRAITS]を参照してください。
 
 [associated function]: https://doc.rust-lang.org/stable/book/ch05-03-method-syntax.html#associated-functions
 [std-default]: https://doc.rust-lang.org/stable/std/default/trait.Default.html
