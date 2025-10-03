@@ -1,41 +1,29 @@
-# Type Consolidation into Wrappers
+# ラッパーへの型の統合
 
-## Description
+## 説明
 
-This pattern is designed to allow gracefully handling multiple related types,
-while minimizing the surface area for memory unsafety.
+このパターンは、メモリ安全性に関する露出面を最小限に抑えながら、複数の関連する型を優雅に処理できるように設計されています。
 
-One of the cornerstones of Rust's aliasing rules is lifetimes. This ensures that
-many patterns of access between types can be memory safe, data race safety
-included.
+Rustのエイリアシング規則の基礎の一つはライフタイムです。これにより、型間のアクセスパターンの多くが、データ競合の安全性を含めてメモリ安全であることが保証されます。
 
-However, when Rust types are exported to other languages, they are usually
-transformed into pointers. In Rust, a pointer means "the user manages the
-lifetime of the pointee." It is their responsibility to avoid memory unsafety.
+しかし、Rust の型が他の言語にエクスポートされる場合、通常はポインタに変換されます。Rustにおいて、ポインタは「ユーザーがポインタの指す先のライフタイムを管理する」ことを意味します。メモリ安全性を回避するのはユーザーの責任です。
 
-Some level of trust in the user code is thus required, notably around
-use-after-free which Rust can do nothing about. However, some API designs place
-higher burdens than others on the code written in the other language.
+したがって、ユーザーコードに対してある程度の信頼が必要とされ、特に解放後使用(use-after-free)については、Rustは何もできません。しかし、APIの設計によっては、他の言語で書かれたコードに課す負担が高いものもあります。
 
-The lowest risk API is the "consolidated wrapper", where all possible
-interactions with an object are folded into a "wrapper type", while keeping the
-Rust API clean.
+最もリスクの低いAPIは「統合ラッパー」であり、オブジェクトに対するすべての可能な相互作用を「ラッパー型」に折りたたみながら、Rust APIをクリーンに保ちます。
 
-## Code Example
+## コード例
 
-To understand this, let us look at a classic example of an API to export:
-iteration through a collection.
+これを理解するために、エクスポートするAPIの古典的な例を見てみましょう：コレクションの反復処理です。
 
-That API looks like this:
+そのAPIは次のようになります：
 
-1. The iterator is initialized with `first_key`.
-2. Each call to `next_key` will advance the iterator.
-3. Calls to `next_key` if the iterator is at the end will do nothing.
-4. As noted above, the iterator is "wrapped into" the collection (unlike the
-   native Rust API).
+1. イテレータは `first_key` で初期化されます。
+2. `next_key` への各呼び出しでイテレータが進みます。
+3. イテレータが最後にある場合、`next_key` への呼び出しは何もしません。
+4. 上記のように、イテレータはコレクションに「ラップされます」（ネイティブなRust APIとは異なります）。
 
-If the iterator implements `nth()` efficiently, then it is possible to make it
-ephemeral to each function call:
+イテレータが `nth()` を効率的に実装している場合、各関数呼び出しに対して一時的なものにすることができます：
 
 ```rust,ignore
 struct MySetWrapper {
@@ -59,35 +47,27 @@ impl MySetWrapper {
 }
 ```
 
-As a result, the wrapper is simple and contains no `unsafe` code.
+その結果、ラッパーはシンプルで、`unsafe` コードを含みません。
 
-## Advantages
+## 利点
 
-This makes APIs safer to use, avoiding issues with lifetimes between types. See
-[Object-Based APIs](./export.md) for more on the advantages and pitfalls this
-avoids.
+これにより、型間のライフタイムに関する問題を回避し、APIをより安全に使用できるようになります。これが回避する利点と落とし穴の詳細については、[オブジェクトベースのAPI](./export.md)を参照してください。
 
-## Disadvantages
+## 欠点
 
-Often, wrapping types is quite difficult, and sometimes a Rust API compromise
-would make things easier.
+多くの場合、型をラップすることは非常に難しく、時にはRust APIの妥協点が物事を容易にすることがあります。
 
-As an example, consider an iterator which does not efficiently implement
-`nth()`. It would definitely be worth putting in special logic to make the
-object handle iteration internally, or to support a different access pattern
-efficiently that only the Foreign Function API will use.
+例として、`nth()` を効率的に実装していないイテレータを考えてみましょう。オブジェクトが内部で反復を処理するための特別なロジックを入れるか、外部関数API専用の効率的な異なるアクセスパターンをサポートする価値は間違いなくあります。
 
-### Trying to Wrap Iterators (and Failing)
+### イテレータをラップしようとする試み（そして失敗）
 
-To wrap any type of iterator into the API correctly, the wrapper would need to
-do what a C version of the code would do: erase the lifetime of the iterator,
-and manage it manually.
+任意の型のイテレータをAPIに正しくラップするには、ラッパーはCバージョンのコードが行うことを行う必要があります：イテレータのライフタイムを消去し、手動で管理します。
 
-Suffice it to say, this is *incredibly* difficult.
+言うまでもなく、これは*非常に*難しいです。
 
-Here is an illustration of just *one* pitfall.
+これは*一つの*落とし穴の例です。
 
-A first version of `MySetWrapper` would look like this:
+`MySetWrapper` の最初のバージョンは次のようになります：
 
 ```rust,ignore
 struct MySetWrapper {
@@ -98,15 +78,11 @@ struct MySetWrapper {
 }
 ```
 
-With `transmute` being used to extend a lifetime, and a pointer to hide it, it's
-ugly already. But it gets even worse: *any other operation can cause Rust
-`undefined behaviour`*.
+`transmute` を使用してライフタイムを延長し、ポインタでそれを隠すことで、すでに醜くなっています。しかし、さらに悪いことに：*他の操作がRustの`未定義動作`を引き起こす可能性があります*。
 
-Consider that the `MySet` in the wrapper could be manipulated by other functions
-during iteration, such as storing a new value to the key it was iterating over.
-The API doesn't discourage this, and in fact some similar C libraries expect it.
+ラッパー内の `MySet` は、反復処理中に他の関数によって操作される可能性があることを考えてください。たとえば、反復処理中のキーに新しい値を格納するなどです。APIはこれを阻止せず、実際にいくつかの類似したCライブラリはこれを期待しています。
 
-A simple implementation of `myset_store` would be:
+`myset_store` の単純な実装は次のようになります：
 
 ```rust,ignore
 pub mod unsafe_module {
@@ -131,30 +107,12 @@ pub mod unsafe_module {
 }
 ```
 
-If the iterator exists when this function is called, we have violated one of
-Rust's aliasing rules. According to Rust, the mutable reference in this block
-must have *exclusive* access to the object. If the iterator simply exists, it's
-not exclusive, so we have `undefined behaviour`! [^1]
+この関数が呼び出されたときにイテレータが存在する場合、Rustのエイリアシング規則の一つに違反したことになります。Rustによれば、このブロック内の可変参照はオブジェクトへの*排他的*アクセスを持たなければなりません。イテレータが単に存在するだけであれば、それは排他的ではないため、`未定義動作`となります！[^1]
 
-To avoid this, we must have a way of ensuring that mutable reference really is
-exclusive. That basically means clearing out the iterator's shared reference
-while it exists, and then reconstructing it. In most cases, that will still be
-less efficient than the C version.
+これを避けるためには、可変参照が本当に排他的であることを保証する方法が必要です。それは基本的に、存在している間にイテレータの共有参照をクリアし、その後再構築することを意味します。ほとんどの場合、それでもCバージョンよりも効率が低くなります。
 
-Some may ask: how can C do this more efficiently? The answer is, it cheats.
-Rust's aliasing rules are the problem, and C simply ignores them for its
-pointers. In exchange, it is common to see code that is declared in the manual
-as "not thread safe" under some or all circumstances. In fact, the
-[GNU C library](https://manpages.debian.org/buster/manpages/attributes.7.en.html)
-has an entire lexicon dedicated to concurrent behavior!
+なぜCはこれをより効率的に行えるのか疑問に思う人もいるかもしれません。答えは、Cがズルをしているからです。Rustのエイリアシング規則が問題であり、Cは単にポインタに対してそれらを無視します。その代わりに、マニュアルで「スレッドセーフではない」と宣言されているコードを見ることが一般的です。実際、[GNU Cライブラリ](https://manpages.debian.org/buster/manpages/attributes.7.en.html)には、並行動作専用の全語彙があります！
 
-Rust would rather make everything memory safe all the time, for both safety and
-optimizations that C code cannot attain. Being denied access to certain
-shortcuts is the price Rust programmers need to pay.
+Rustは、安全性とCコードでは達成できない最適化の両方のために、すべてを常にメモリ安全にすることを好みます。特定のショートカットへのアクセスを拒否されることは、Rustプログラマーが支払う必要がある代償です。
 
-[^1]: For the C programmers out there scratching their heads, the iterator need
-not be read *during* this code to cause the UB. The exclusivity rule also
-enables compiler optimizations which may cause inconsistent observations by the
-iterator's shared reference (e.g. stack spills or reordering instructions for
-efficiency). These observations may happen *any time after* the mutable
-reference is created.
+[^1]: 頭を悩ませているCプログラマーのために、このコード*中に*イテレータが読み取られる必要はなく、UBが発生します。排他性規則は、イテレータの共有参照による不整合な観測を引き起こす可能性のあるコンパイラの最適化も可能にします（例：スタックスピルや効率のための命令の並べ替え）。これらの観測は、可変参照が作成された*後のいつでも*発生する可能性があります。
