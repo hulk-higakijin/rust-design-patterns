@@ -1,32 +1,20 @@
-# Use borrowed types for arguments
+# 引数には borrowed 型を使う
 
-## Description
+## 説明
 
-Using a target of a deref coercion can increase the flexibility of your code
-when you are deciding which argument type to use for a function argument. In
-this way, the function will accept more input types.
+deref 型強制の対象となる型を使用することで、関数の引数にどの型を使うかを決める際にコードの柔軟性を高めることができます。この方法により、関数はより多くの入力型を受け入れることができるようになります。
 
-This is not limited to slice-able or fat pointer types. In fact, you should
-always prefer using the **borrowed type** over **borrowing the owned type**.
-Such as `&str` over `&String`, `&[T]` over `&Vec<T>`, or `&T` over `&Box<T>`.
+これはスライス可能な型やファットポインタ型に限定されません。実際、**所有型への借用**よりも**借用型**を常に優先すべきです。たとえば、`&String` ではなく `&str`、`&Vec<T>` ではなく `&[T]`、`&Box<T>` ではなく `&T` を使用します。
 
-Using borrowed types you can avoid layers of indirection for those instances
-where the owned type already provides a layer of indirection. For instance, a
-`String` has a layer of indirection, so a `&String` will have two layers of
-indirection. We can avoid this by using `&str` instead, and letting `&String`
-coerce to a `&str` whenever the function is invoked.
+borrowed 型を使用することで、所有型が既に間接参照の層を提供している場合に、間接参照の層を避けることができます。たとえば、`String` は間接参照の層を持っているため、`&String` は2層の間接参照を持つことになります。代わりに `&str` を使用することでこれを避けることができ、関数が呼び出されるたびに `&String` が `&str` に型強制されます。
 
-## Example
+## 例
 
-For this example, we will illustrate some differences for using `&String` as a
-function argument versus using a `&str`, but the ideas apply as well to using
-`&Vec<T>` versus using a `&[T]` or using a `&Box<T>` versus a `&T`.
+この例では、関数の引数として `&String` を使用する場合と `&str` を使用する場合のいくつかの違いを説明しますが、この考え方は `&Vec<T>` と `&[T]` の使用、または `&Box<T>` と `&T` の使用にも同様に適用されます。
 
-Consider an example where we wish to determine if a word contains three
-consecutive vowels. We don't need to own the string to determine this, so we
-will take a reference.
+3つの連続した母音を含む単語かどうかを判定したい例を考えてみましょう。これを判定するために文字列を所有する必要はないので、参照を取ります。
 
-The code might look something like this:
+コードは次のようになります:
 
 ```rust
 fn three_vowels(word: &String) -> bool {
@@ -57,36 +45,26 @@ fn main() {
 }
 ```
 
-This works fine because we are passing a `&String` type as a parameter. If we
-remove the comments on the last two lines, the example will fail. This is
-because a `&str` type will not coerce to a `&String` type. We can fix this by
-simply modifying the type for our argument.
+これは `&String` 型をパラメータとして渡しているため正常に動作します。最後の2行のコメントを外すと、例は失敗します。これは `&str` 型が `&String` 型に型強制されないためです。この問題は、引数の型を単純に変更することで修正できます。
 
-For instance, if we change our function declaration to:
+たとえば、関数宣言を次のように変更すると:
 
 ```rust, ignore
 fn three_vowels(word: &str) -> bool {
 ```
 
-then both versions will compile and print the same output.
+両方のバージョンがコンパイルされ、同じ出力が表示されます。
 
 ```bash
 Ferris: false
 Curious: true
 ```
 
-But wait, that's not all! There is more to this story. It's likely that you may
-say to yourself: that doesn't matter, I will never be using a `&'static str` as
-an input anyways (as we did when we used `"Ferris"`). Even ignoring this special
-example, you may still find that using `&str` will give you more flexibility
-than using a `&String`.
+しかし、それだけではありません！この話にはさらに続きがあります。おそらく、あなたは「そんなことは問題にならない、私は入力として `&'static str` を使うことはない」と考えるかもしれません（`"Ferris"` を使用したときのように）。この特別な例を無視しても、`&str` を使用することで `&String` を使用するよりも柔軟性が高まることがわかるでしょう。
 
-Let's now take an example where someone gives us a sentence, and we want to
-determine if any of the words in the sentence contain three consecutive vowels.
-We probably should make use of the function we have already defined and simply
-feed in each word from the sentence.
+では、誰かから文章を与えられ、その文章内の単語のいずれかに3つの連続した母音が含まれているかどうかを判定したい例を考えてみましょう。すでに定義した関数を利用して、文章から各単語を入力すればよいでしょう。
 
-An example of this could look like this:
+この例は次のようになります:
 
 ```rust
 fn three_vowels(word: &str) -> bool {
@@ -116,23 +94,18 @@ fn main() {
 }
 ```
 
-Running this example using our function declared with an argument type `&str`
-will yield
+引数の型を `&str` で宣言した関数を使ってこの例を実行すると、次のように出力されます:
 
 ```bash
 curious has three consecutive vowels!
 ```
 
-However, this example will not run when our function is declared with an
-argument type `&String`. This is because string slices are a `&str` and not a
-`&String` which would require an allocation to be converted to `&String` which
-is not implicit, whereas converting from `String` to `&str` is cheap and
-implicit.
+しかし、この例は引数の型を `&String` で宣言した関数では実行できません。これは、文字列スライスは `&str` であって `&String` ではないため、`&String` に変換するにはメモリ割り当てが必要になり、これは暗黙的には行われないからです。一方、`String` から `&str` への変換は安価で暗黙的に行われます。
 
-## See also
+## 参照
 
 - [Rust Language Reference on Type Coercions](https://doc.rust-lang.org/reference/type-coercions.html)
-- For more discussion on how to handle `String` and `&str` see
-  [this blog series (2015)](https://web.archive.org/web/20201112023149/https://hermanradtke.com/2015/05/03/string-vs-str-in-rust-functions.html)
-  by Herman J. Radtke III
-- [Steve Klabnik's Blogpost on 'When should I use String vs &str?'](https://archive.ph/LBpD0)
+- `String` と `&str` の扱い方についての詳細な議論は、Herman J. Radtke III による
+  [このブログシリーズ (2015)](https://web.archive.org/web/20201112023149/https://hermanradtke.com/2015/05/03/string-vs-str-in-rust-functions.html)
+  を参照してください
+- [Steve Klabnik のブログ投稿 'When should I use String vs &str?'](https://archive.ph/LBpD0)
