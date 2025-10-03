@@ -1,10 +1,10 @@
 # Builder
 
-## Description
+## 説明
 
-Construct an object with calls to a builder helper.
+ビルダーヘルパーへの呼び出しを使用してオブジェクトを構築します。
 
-## Example
+## 例
 
 ```rust
 #[derive(Debug, PartialEq)]
@@ -60,42 +60,33 @@ fn builder_test() {
 }
 ```
 
-## Motivation
+## 動機
 
-Useful when you would otherwise require many constructors or where construction
-has side effects.
+多数のコンストラクタが必要になる場合や、構築に副作用がある場合に有用です。
 
-## Advantages
+## 利点
 
-Separates methods for building from other methods.
+構築用のメソッドを他のメソッドから分離します。
 
-Prevents proliferation of constructors.
+コンストラクタの増殖を防ぎます。
 
-Can be used for one-liner initialisation as well as more complex construction.
+ワンライナーでの初期化にも、より複雑な構築にも使用できます。
 
-## Disadvantages
+## 欠点
 
-More complex than creating a struct object directly, or a simple constructor
-function.
+構造体オブジェクトを直接作成したり、シンプルなコンストラクタ関数を使用するよりも複雑です。
 
-## Discussion
+## 議論
 
-This pattern is seen more frequently in Rust (and for simpler objects) than in
-many other languages because Rust lacks overloading. Since you can only have a
-single method with a given name, having multiple constructors is less nice in
-Rust than in C++, Java, or others.
+このパターンは、Rustにオーバーロードがないため、他の多くの言語よりもRust（そしてよりシンプルなオブジェクト）でより頻繁に見られます。特定の名前を持つメソッドは1つしか持てないため、複数のコンストラクタを持つことは、C++やJavaなどと比較してRustではあまり適していません。
 
-This pattern is often used where the builder object is useful in its own right,
-rather than being just a builder. For example, see
+このパターンは、ビルダーオブジェクトが単なるビルダーではなく、それ自体が有用である場合によく使用されます。例えば、
 [`std::process::Command`](https://doc.rust-lang.org/std/process/struct.Command.html)
-is a builder for
-[`Child`](https://doc.rust-lang.org/std/process/struct.Child.html) (a process).
-In these cases, the `T` and `TBuilder` naming pattern is not used.
+は
+[`Child`](https://doc.rust-lang.org/std/process/struct.Child.html)（プロセス）
+のビルダーです。このような場合、`T`と`TBuilder`の命名パターンは使用されません。
 
-The example takes and returns the builder by value. It is often more ergonomic
-(and more efficient) to take and return the builder as a mutable reference. The
-borrow checker makes this work naturally. This approach has the advantage that
-one can write code like
+この例では、ビルダーを値で受け取り、値で返します。ビルダーを可変参照として受け取り、返す方が、より人間工学的（そしてより効率的）であることがよくあります。借用チェッカーはこれを自然に機能させます。このアプローチには、次のようなコードを書けるという利点があります
 
 ```rust,ignore
 let mut fb = FooBuilder::new();
@@ -104,9 +95,9 @@ fb.b();
 let f = fb.build();
 ```
 
-as well as the `FooBuilder::new().a().b().build()` style.
+`FooBuilder::new().a().b().build()` スタイルと同様に。
 
-## See also
+## 参考
 
 - [Description in the style guide](https://web.archive.org/web/20210104103100/https://doc.rust-lang.org/1.12.0/style/ownership/builders.html)
 - [derive_builder](https://crates.io/crates/derive_builder), a crate for
