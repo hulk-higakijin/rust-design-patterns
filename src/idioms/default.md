@@ -1,23 +1,14 @@
-# The `Default` Trait
+# `Default` トレイト
 
-## Description
+## 説明
 
-Many types in Rust have a [constructor]. However, this is *specific* to the
-type; Rust cannot abstract over "everything that has a `new()` method". To allow
-this, the [`Default`] trait was conceived, which can be used with containers and
-other generic types (e.g. see [`Option::unwrap_or_default()`]). Notably, some
-containers already implement it where applicable.
+Rustの多くの型には[コンストラクタ]があります。しかし、これは型に*固有*のものです。Rustは「`new()`メソッドを持つすべてのもの」を抽象化することはできません。これを可能にするために[`Default`]トレイトが考案されました。これはコンテナやその他のジェネリック型で使用できます（例：[`Option::unwrap_or_default()`]を参照）。特に、一部のコンテナは該当する場合にすでにこれを実装しています。
 
-Not only do one-element containers like `Cow`, `Box` or `Arc` implement
-`Default` for contained `Default` types, one can automatically
-`#[derive(Default)]` for structs whose fields all implement it, so the more
-types implement `Default`, the more useful it becomes.
+`Cow`、`Box`、`Arc`のような単一要素のコンテナが、含まれる型が`Default`を実装している場合に`Default`を実装するだけでなく、すべてのフィールドが`Default`を実装している構造体に対して自動的に`#[derive(Default)]`できます。そのため、より多くの型が`Default`を実装するほど、より便利になります。
 
-On the other hand, constructors can take multiple arguments, while the
-`default()` method does not. There can even be multiple constructors with
-different names, but there can only be one `Default` implementation per type.
+一方で、コンストラクタは複数の引数を取ることができますが、`default()`メソッドは引数を取りません。異なる名前を持つ複数のコンストラクタを持つことさえできますが、型ごとに`Default`の実装は1つしか持てません。
 
-## Example
+## 例
 
 ```rust
 use std::{path::PathBuf, time::Duration};
@@ -55,15 +46,14 @@ fn main() {
 }
 ```
 
-## See also
+## 参照
 
-- The [constructor] idiom is another way to generate instances that may or may
-  not be "default"
-- The [`Default`] documentation (scroll down for the list of implementors)
+- [コンストラクタ]イディオムは、「デフォルト」である場合とそうでない場合があるインスタンスを生成する別の方法です
+- [`Default`]ドキュメント（実装者のリストについては下にスクロールしてください）
 - [`Option::unwrap_or_default()`]
 - [`derive(new)`]
 
-[constructor]: ctor.md
+[コンストラクタ]: ctor.md
 [`Default`]: https://doc.rust-lang.org/stable/std/default/trait.Default.html
 [`Option::unwrap_or_default()`]: https://doc.rust-lang.org/stable/std/option/enum.Option.html#method.unwrap_or_default
 [`derive(new)`]: https://crates.io/crates/derive-new/
