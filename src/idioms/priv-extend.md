@@ -1,22 +1,16 @@
-# `#[non_exhaustive]` and private fields for extensibility
+# 拡張性のための `#[non_exhaustive]` とプライベートフィールド
 
-## Description
+## 説明
 
-A small set of scenarios exist where a library author may want to add public
-fields to a public struct or new variants to an enum without breaking backwards
-compatibility.
+ライブラリの作者が、後方互換性を壊すことなく、公開構造体に公開フィールドを追加したり、列挙型に新しいバリアントを追加したりしたい場合があります。
 
-Rust offers two solutions to this problem:
+Rustはこの問題に対して2つの解決策を提供しています：
 
-- Use `#[non_exhaustive]` on `struct`s, `enum`s, and `enum` variants. For
-  extensive documentation on all the places where `#[non_exhaustive]` can be
-  used, see
-  [the docs](https://doc.rust-lang.org/reference/attributes/type_system.html#the-non_exhaustive-attribute).
+- `struct`、`enum`、および `enum` のバリアントに `#[non_exhaustive]` を使用する。`#[non_exhaustive]` が使用できるすべての場所に関する詳細なドキュメントについては、[the docs](https://doc.rust-lang.org/reference/attributes/type_system.html#the-non_exhaustive-attribute)を参照してください。
 
-- You may add a private field to a struct to prevent it from being directly
-  instantiated or matched against (see Alternative)
+- 構造体にプライベートフィールドを追加して、直接インスタンス化されたりマッチされたりするのを防ぐことができます（代替案を参照）
 
-## Example
+## 例
 
 ```rust
 mod a {
@@ -57,23 +51,13 @@ fn print_matched_variants(s: a::S) {
 }
 ```
 
-## Alternative: `Private fields` for structs
+## 代替案：構造体の `プライベートフィールド`
 
-`#[non_exhaustive]` only works across crate boundaries. Within a crate, the
-private field method may be used.
+`#[non_exhaustive]` はクレートの境界を越えてのみ機能します。クレート内では、プライベートフィールドの方法を使用できます。
 
-Adding a field to a struct is a mostly backwards compatible change. However, if
-a client uses a pattern to deconstruct a struct instance, they might name all
-the fields in the struct and adding a new one would break that pattern. The
-client could name some fields and use `..` in the pattern, in which case adding
-another field is backwards compatible. Making at least one of the struct's
-fields private forces clients to use the latter form of patterns, ensuring that
-the struct is future-proof.
+構造体にフィールドを追加することは、ほぼ後方互換性のある変更です。しかし、クライアントがパターンを使用して構造体インスタンスを分解する場合、構造体のすべてのフィールドに名前を付ける可能性があり、新しいフィールドを追加するとそのパターンが壊れます。クライアントがいくつかのフィールドに名前を付け、パターンで `..` を使用する場合、別のフィールドを追加することは後方互換性があります。構造体のフィールドの少なくとも1つをプライベートにすることで、クライアントは後者の形式のパターンを使用せざるを得なくなり、構造体が将来にわたって安全であることが保証されます。
 
-The downside of this approach is that you might need to add an otherwise
-unneeded field to the struct. You can use the `()` type so that there is no
-runtime overhead and prepend `_` to the field name to avoid the unused field
-warning.
+このアプローチの欠点は、他の方法では不要なフィールドを構造体に追加する必要がある場合があることです。`()` 型を使用すると実行時のオーバーヘッドがなく、フィールド名の前に `_` を付けることで未使用フィールドの警告を回避できます。
 
 ```rust
 pub struct S {
@@ -84,37 +68,20 @@ pub struct S {
 }
 ```
 
-## Discussion
+## 議論
 
-On `struct`s, `#[non_exhaustive]` allows adding additional fields in a backwards
-compatible way. It will also prevent clients from using the struct constructor,
-even if all the fields are public. This may be helpful, but it's worth
-considering if you *want* an additional field to be found by clients as a
-compiler error rather than something that may be silently undiscovered.
+`struct` において、`#[non_exhaustive]` は後方互換性のある方法で追加のフィールドを追加することを可能にします。また、すべてのフィールドが公開されている場合でも、クライアントが構造体コンストラクタを使用することを防ぎます。これは役立つかもしれませんが、追加のフィールドをコンパイラエラーとしてクライアントに見つけてもらうか、それとも静かに見過ごされる可能性があるものとして扱うか、検討する価値があります。
 
-`#[non_exhaustive]` can be applied to enum variants as well. A
-`#[non_exhaustive]` variant behaves in the same way as a `#[non_exhaustive]`
-struct.
+`#[non_exhaustive]` は列挙型のバリアントにも適用できます。`#[non_exhaustive]` バリアントは `#[non_exhaustive]` 構造体と同じように動作します。
 
-Use this deliberately and with caution: incrementing the major version when
-adding fields or variants is often a better option. `#[non_exhaustive]` may be
-appropriate in scenarios where you're modeling an external resource that may
-change out-of-sync with your library, but is not a general purpose tool.
+これを意図的かつ慎重に使用してください：フィールドやバリアントを追加する際にメジャーバージョンをインクリメントすることが、多くの場合より良い選択肢です。`#[non_exhaustive]` は、ライブラリと同期せずに変更される可能性のある外部リソースをモデル化するシナリオでは適切かもしれませんが、汎用的なツールではありません。
 
-### Disadvantages
+### デメリット
 
-`#[non_exhaustive]` can make your code much less ergonomic to use, especially
-when forced to handle unknown enum variants. It should only be used when these
-sorts of evolutions are required **without** incrementing the major version.
+`#[non_exhaustive]` は、特に未知の列挙型バリアントを処理することを強制される場合、コードの人間工学を大幅に低下させる可能性があります。これは、メジャーバージョンをインクリメント**せずに**このような進化が必要な場合にのみ使用すべきです。
 
-When `#[non_exhaustive]` is applied to `enum`s, it forces clients to handle a
-wildcard variant. If there is no sensible action to take in this case, this may
-lead to awkward code and code paths that are only executed in extremely rare
-circumstances. If a client decides to `panic!()` in this scenario, it may have
-been better to expose this error at compile time. In fact, `#[non_exhaustive]`
-forces clients to handle the "Something else" case; there is rarely a sensible
-action to take in this scenario.
+`#[non_exhaustive]` が `enum` に適用されると、クライアントはワイルドカードバリアントを処理することを強制されます。この場合に適切なアクションがない場合、これは不自然なコードと、極めて稀な状況でのみ実行されるコードパスにつながる可能性があります。クライアントがこのシナリオで `panic!()` することを決定した場合、このエラーをコンパイル時に公開した方が良かったかもしれません。実際、`#[non_exhaustive]` はクライアントに「その他」のケースを処理することを強制します；このシナリオでは適切なアクションはほとんどありません。
 
-## See also
+## 参照
 
 - [RFC introducing #[non_exhaustive] attribute for enums and structs](https://github.com/rust-lang/rfcs/blob/master/text/2008-non-exhaustive.md)
