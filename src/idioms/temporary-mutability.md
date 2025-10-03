@@ -1,19 +1,16 @@
-# Temporary mutability
+# 一時的な可変性
 
-## Description
+## 説明
 
-Often it is necessary to prepare and process some data, but after that data are
-only inspected and never modified. The intention can be made explicit by
-redefining the mutable variable as immutable.
+データを準備して処理する必要があることがよくありますが、その後はデータを検査するだけで変更することはありません。可変変数を不変として再定義することで、その意図を明示的に示すことができます。
 
-It can be done either by processing data within a nested block or by redefining
-the variable.
+これは、ネストされたブロック内でデータを処理するか、変数を再定義することで実現できます。
 
-## Example
+## 例
 
-Say, vector must be sorted before usage.
+例えば、ベクタを使用する前にソートする必要があるとします。
 
-Using nested block:
+ネストされたブロックを使用する場合:
 
 ```rust,ignore
 let data = {
@@ -25,7 +22,7 @@ let data = {
 // Here `data` is immutable.
 ```
 
-Using variable rebinding:
+変数の再束縛を使用する場合:
 
 ```rust,ignore
 let mut data = get_vec();
@@ -35,11 +32,10 @@ let data = data;
 // Here `data` is immutable.
 ```
 
-## Advantages
+## 利点
 
-Compiler ensures that you don't accidentally mutate data after some point.
+コンパイラが、ある時点以降に誤ってデータを変更しないことを保証します。
 
-## Disadvantages
+## 欠点
 
-Nested block requires additional indentation of block body. One more line to
-return data from block or redefine variable.
+ネストされたブロックでは、ブロック本体に追加のインデントが必要になります。ブロックからデータを返すか、変数を再定義するために、もう1行必要になります。
