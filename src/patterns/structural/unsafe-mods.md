@@ -1,35 +1,24 @@
-# Contain unsafety in small modules
+# 小さなモジュールにunsafeを封じ込める
 
-## Description
+## 説明
 
-If you have `unsafe` code, create the smallest possible module that can uphold
-the needed invariants to build a minimal safe interface upon the unsafety. Embed
-this into a larger module that contains only safe code and presents an ergonomic
-interface. Note that the outer module can contain unsafe functions and methods
-that call directly into the unsafe code. Users may use this to gain speed
-benefits.
+`unsafe`なコードがある場合は、必要な不変条件を維持できる最小限のモジュールを作成し、unsafeの上に最小限の安全なインターフェースを構築します。これをより大きなモジュールに埋め込み、そのモジュールは安全なコードのみを含み、使いやすいインターフェースを提供します。なお、外側のモジュールはunsafeなコードを直接呼び出すunsafe関数やメソッドを含むことができます。ユーザーはこれを使用して速度上の利点を得ることができます。
 
-## Advantages
+## 利点
 
-- This restricts the unsafe code that must be audited
-- Writing the outer module is much easier, since you can count on the guarantees
-  of the inner module
+- 監査が必要なunsafeなコードを制限できる
+- 内側のモジュールの保証に依存できるため、外側のモジュールの記述がはるかに簡単になる
 
-## Disadvantages
+## 欠点
 
-- Sometimes, it may be hard to find a suitable interface.
-- The abstraction may introduce inefficiencies.
+- 適切なインターフェースを見つけるのが難しい場合がある
+- 抽象化により非効率性が生じる可能性がある
 
-## Examples
+## 例
 
-- The [`toolshed`](https://docs.rs/toolshed) crate contains its unsafe
-  operations in submodules, presenting a safe interface to users.
-- `std`'s `String` class is a wrapper over `Vec<u8>` with the added invariant
-  that the contents must be valid UTF-8. The operations on `String` ensure this
-  behavior. However, users have the option of using an `unsafe` method to create
-  a `String`, in which case the onus is on them to guarantee the validity of the
-  contents.
+- [`toolshed`](https://docs.rs/toolshed) crateは、unsafeな操作をサブモジュールに含め、ユーザーに安全なインターフェースを提供している
+- `std`の`String`クラスは、内容が有効なUTF-8でなければならないという不変条件を追加した`Vec<u8>`のラッパーである。`String`の操作はこの動作を保証する。ただし、ユーザーは`unsafe`メソッドを使用して`String`を作成するオプションがあり、その場合は内容の妥当性を保証する責任がユーザーにある
 
-## See also
+## 参照
 
 - [Ralf Jung's Blog about invariants in unsafe code](https://www.ralfj.de/blog/2018/08/22/two-kinds-of-invariants.html)
