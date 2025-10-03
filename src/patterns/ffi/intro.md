@@ -1,13 +1,9 @@
-# FFI Patterns
+# FFI パターン
 
-Writing FFI code is an entire course in itself. However, there are several
-idioms here that can act as pointers, and avoid traps for inexperienced users of
-unsafe Rust.
+FFIコードを書くことは、それ自体が1つのコース全体に相当します。しかし、ここには経験の浅いunsafe Rustユーザーのための指針となり、落とし穴を避けるのに役立ついくつかのイディオムがあります。
 
-This section contains design patterns that may be useful when doing FFI.
+このセクションには、FFIを行う際に役立つ可能性のあるデザインパターンが含まれています。
 
-1. [Object-Based API](./export.md) design that has good memory safety
-   characteristics, and a clean boundary of what is safe and what is unsafe
+1. [オブジェクトベースAPI](./export.md) - メモリ安全性の特性が優れており、何が安全で何が安全でないかの明確な境界を持つ設計
 
-2. [Type Consolidation into Wrappers](./wrappers.md) - group multiple Rust types
-   together into an opaque "object"
+2. [型の統合とラッパー](./wrappers.md) - 複数のRustの型を不透明な「オブジェクト」にグループ化する
