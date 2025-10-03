@@ -1,29 +1,21 @@
-# Passing Strings
+# 文字列の受け渡し
 
-## Description
+## 説明
 
-When passing strings to FFI functions, there are four principles that should be
-followed:
+FFI関数に文字列を渡す際には、以下の4つの原則に従うべきです:
 
-1. Make the lifetime of owned strings as long as possible.
-2. Minimize `unsafe` code during the conversion.
-3. If the C code can modify the string data, use `Vec` instead of `CString`.
-4. Unless the Foreign Function API requires it, the ownership of the string
-   should not transfer to the callee.
+1. 所有する文字列の寿命をできるだけ長くする。
+2. 変換時の`unsafe`コードを最小化する。
+3. Cコードが文字列データを変更する可能性がある場合は、`CString`の代わりに`Vec`を使用する。
+4. Foreign Function APIが必要としない限り、文字列の所有権を呼び出し先に移譲すべきではない。
 
-## Motivation
+## 動機
 
-Rust has built-in support for C-style strings with its `CString` and `CStr`
-types. However, there are different approaches one can take with strings that
-are being sent to a foreign function call from a Rust function.
+Rustには、`CString`と`CStr`型によるC形式文字列への組み込みサポートがあります。しかし、Rust関数から外部関数呼び出しに送信される文字列には、さまざまなアプローチが存在します。
 
-The best practice is simple: use `CString` in such a way as to minimize `unsafe`
-code. However, a secondary caveat is that *the object must live long enough*,
-meaning the lifetime should be maximized. In addition, the documentation
-explains that "round-tripping" a `CString` after modification is UB, so
-additional work is necessary in that case.
+ベストプラクティスはシンプルです:`unsafe`コードを最小化する方法で`CString`を使用することです。ただし、副次的な注意点として、*オブジェクトは十分に長く生存しなければならない*ということがあります。つまり、ライフタイムを最大化する必要があります。さらに、ドキュメントでは、変更後に`CString`を「往復」させることは未定義動作であると説明されているため、その場合には追加の作業が必要です。
 
-## Code Example
+## コード例
 
 ```rust,ignore
 pub mod unsafe_module {
@@ -63,16 +55,15 @@ pub mod unsafe_module {
 }
 ```
 
-## Advantages
+## 利点
 
-The example is written in a way to ensure that:
+この例は以下を確実にするように書かれています:
 
-1. The `unsafe` block is as small as possible.
-2. The `CString` lives long enough.
-3. Errors with typecasts are always propagated when possible.
+1. `unsafe`ブロックを可能な限り小さくする。
+2. `CString`が十分に長く生存する。
+3. 型キャストのエラーは可能な限り常に伝播される。
 
-A common mistake (so common it's in the documentation) is to not use the
-variable in the first block:
+よくある間違い(ドキュメントにも記載されているほど一般的)は、最初のブロックで変数を使用しないことです:
 
 ```rust,ignore
 pub mod unsafe_module {
@@ -89,15 +80,10 @@ pub mod unsafe_module {
 }
 ```
 
-This code will result in a dangling pointer, because the lifetime of the
-`CString` is not extended by the pointer creation, unlike if a reference were
-created.
+このコードはダングリングポインタを生成します。なぜなら、参照が作成された場合とは異なり、`CString`のライフタイムはポインタの作成によって延長されないためです。
 
-Another issue frequently raised is that the initialization of a 1k vector of
-zeroes is "slow". However, recent versions of Rust actually optimize that
-particular macro to a call to `zmalloc`, meaning it is as fast as the operating
-system's ability to return zeroed memory (which is quite fast).
+もう一つ頻繁に提起される問題は、1kのゼロベクタの初期化が「遅い」というものです。しかし、Rustの最近のバージョンでは、実際にその特定のマクロが`zmalloc`への呼び出しに最適化されており、これはオペレーティングシステムがゼロ化されたメモリを返す能力と同じ速さ(非常に高速)であることを意味します。
 
-## Disadvantages
+## 欠点
 
-None?
+なし?
