@@ -1,21 +1,14 @@
-# Struct decomposition for independent borrowing
+# 独立した借用のための構造体の分解
 
-## Description
+## 説明
 
-Sometimes a large struct will cause issues with the borrow checker - although
-fields can be borrowed independently, sometimes the whole struct ends up being
-used at once, preventing other uses. A solution might be to decompose the struct
-into several smaller structs. Then compose these together into the original
-struct. Then each struct can be borrowed separately and have more flexible
-behaviour.
+大きな構造体は、借用チェッカーで問題を引き起こすことがあります。フィールドは独立して借用できますが、構造体全体が一度に使用されてしまい、他の使用を妨げることがあります。解決策として、構造体をいくつかの小さな構造体に分解することが考えられます。その後、これらを元の構造体に合成します。こうすることで、各構造体を個別に借用でき、より柔軟な動作が可能になります。
 
-This will often lead to a better design in other ways: applying this design
-pattern often reveals smaller units of functionality.
+このパターンは、他の面でもより良い設計につながることが多いです。この設計パターンを適用すると、より小さな機能単位が明らかになることがよくあります。
 
-## Example
+## 例
 
-Here is a contrived example of where the borrow checker foils us in our plan to
-use a struct:
+借用チェッカーが構造体の使用計画を阻む不自然な例を示します:
 
 ```rust,ignore
 struct Database {
@@ -43,7 +36,7 @@ fn main() {
 }
 ```
 
-The compiler throws following errors:
+コンパイラは次のエラーを出力します:
 
 ```ignore
 let connection_string = &mut db.connection_string;
@@ -54,12 +47,11 @@ print_database(&db);
 ------------------ mutable borrow later used here
 ```
 
-We can apply this design pattern and refactor `Database` into three smaller
-structs, thus solving the borrow checking issue:
+この設計パターンを適用して、`Database` を3つの小さな構造体にリファクタリングすることで、借用チェックの問題を解決できます:
 
 ```rust
-// Database is now composed of three structs - ConnectionString, Timeout and PoolSize.
-// Let's decompose it into smaller structs
+// Database は現在、ConnectionString、Timeout、PoolSize の3つの構造体で構成されています。
+// より小さな構造体に分解しましょう
 #[derive(Debug, Clone)]
 struct ConnectionString(String);
 
@@ -69,14 +61,14 @@ struct Timeout(u32);
 #[derive(Debug, Clone, Copy)]
 struct PoolSize(u32);
 
-// We then compose these smaller structs back into `Database`
+// 次に、これらの小さな構造体を `Database` に合成します
 struct Database {
     connection_string: ConnectionString,
     timeout: Timeout,
     pool_size: PoolSize,
 }
 
-// print_database can then take ConnectionString, Timeout and Poolsize struct instead
+// print_database は、ConnectionString、Timeout、Poolsize 構造体を受け取るようになります
 fn print_database(connection_str: ConnectionString, timeout: Timeout, pool_size: PoolSize) {
     println!("Connection string: {connection_str:?}");
     println!("Timeout: {timeout:?}");
@@ -84,7 +76,7 @@ fn print_database(connection_str: ConnectionString, timeout: Timeout, pool_size:
 }
 
 fn main() {
-    // Initialize the Database with the three structs
+    // 3つの構造体で Database を初期化します
     let mut db = Database {
         connection_string: ConnectionString("localhost".to_string()),
         timeout: Timeout(30),
@@ -97,31 +89,20 @@ fn main() {
 }
 ```
 
-## Motivation
+## 動機
 
-This pattern is most useful, when you have a struct that ended up with a lot of
-fields that you want to borrow independently. Thus having a more flexible
-behaviour in the end.
+このパターンは、独立して借用したい多くのフィールドを持つ構造体がある場合に最も有用です。結果として、より柔軟な動作が得られます。
 
-## Advantages
+## 利点
 
-Decomposition of structs lets you work around limitations in the borrow checker.
-And it often produces a better design.
+構造体の分解により、借用チェッカーの制限を回避できます。また、多くの場合、より良い設計が生まれます。
 
-## Disadvantages
+## 欠点
 
-It can lead to more verbose code. And sometimes, the smaller structs are not
-good abstractions, and so we end up with a worse design. That is probably a
-'code smell', indicating that the program should be refactored in some way.
+コードが冗長になる可能性があります。また、小さな構造体が良い抽象化でない場合もあり、結果として設計が悪化することがあります。これはおそらく「コードの臭い」であり、プログラムを何らかの方法でリファクタリングすべきことを示しています。
 
-## Discussion
+## 議論
 
-This pattern is not required in languages that don't have a borrow checker, so
-in that sense is unique to Rust. However, making smaller units of functionality
-often leads to cleaner code: a widely acknowledged principle of software
-engineering, independent of the language.
+このパターンは、借用チェッカーを持たない言語では必要ないため、その意味で Rust に固有のものです。しかし、より小さな機能単位を作ることは、多くの場合、よりクリーンなコードにつながります。これは、言語に依存しない、広く認められたソフトウェアエンジニアリングの原則です。
 
-This pattern relies on Rust's borrow checker to be able to borrow fields
-independently of each other. In the example, the borrow checker knows that `a.b`
-and `a.c` are distinct and can be borrowed independently, it does not try to
-borrow all of `a`, which would make this pattern useless.
+このパターンは、Rust の借用チェッカーがフィールドを互いに独立して借用できることに依存しています。この例では、借用チェッカーは `a.b` と `a.c` が別々のものであり、独立して借用できることを認識しています。`a` 全体を借用しようとはしないため、このパターンは有用です。
