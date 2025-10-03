@@ -1,48 +1,27 @@
-# Introduction
+# イントロダクション
 
-## Participation
+## 参加について
 
-If you are interested in contributing to this book, check out the
-[contribution guidelines](https://github.com/rust-unofficial/patterns/blob/master/CONTRIBUTING.md).
+本書への貢献に興味がある方は、[コントリビューションガイドライン](https://github.com/rust-unofficial/patterns/blob/master/CONTRIBUTING.md)をご確認ください。
 
-## News
+## お知らせ
 
-- **2024-03-17**: You can now download the book in PDF format from
-  [this link](https://rust-unofficial.github.io/patterns/rust-design-patterns.pdf).
+- **2024-03-17**: 本書のPDF版を[こちらのリンク](https://rust-unofficial.github.io/patterns/rust-design-patterns.pdf)からダウンロードできるようになりました。
 
-## Design patterns
+## デザインパターン
 
-In software development, we often come across problems that share similarities
-regardless of the environment they appear in. Although the implementation
-details are crucial to solve the task at hand, we may abstract from these
-particularities to find the common practices that are generically applicable.
+ソフトウェア開発において、私たちはしばしば、それが現れる環境に関わらず類似性を共有する問題に遭遇します。実装の詳細は目の前のタスクを解決するために重要ですが、これらの特殊性から抽象化して、汎用的に適用可能な共通のプラクティスを見つけることができます。
 
-Design patterns are a collection of reusable and tested solutions to recurring
-problems in engineering. They make our software more modular, maintainable, and
-extensible. Moreover, these patterns provide a common language for developers,
-making them an excellent tool for effective communication when problem-solving
-in teams.
+デザインパターンは、エンジニアリングにおける再発する問題に対する、再利用可能でテスト済みのソリューションの集合です。デザインパターンは、ソフトウェアをよりモジュール化され、保守しやすく、拡張可能にします。さらに、これらのパターンは開発者にとって共通の言語を提供し、チームでの問題解決において効果的なコミュニケーションのための優れたツールとなります。
 
-Keep in mind: Each pattern comes with its own set of trade-offs. It's crucial to
-focus on why you choose a particular pattern rather than just on how to
-implement it.[^1]
+留意すべき点：各パターンには独自のトレードオフがあります。実装方法だけでなく、なぜ特定のパターンを選択するのかに焦点を当てることが重要です。[^1]
 
-## Design patterns in Rust
+## Rustにおけるデザインパターン
 
-Rust is not object-oriented, and the combination of all its characteristics,
-such as functional elements, a strong type system, and the borrow checker, makes
-it unique. Because of this, Rust design patterns vary with respect to other
-traditional object-oriented programming languages. That's why we decided to
-write this book. We hope you enjoy reading it! The book is divided in three main
-chapters:
+Rustはオブジェクト指向ではなく、関数型要素、強力な型システム、借用チェッカーなど、すべての特性の組み合わせにより、Rustは独自のものとなっています。このため、Rustのデザインパターンは、従来のオブジェクト指向プログラミング言語とは異なります。だからこそ、私たちはこの本を書くことにしました。お読みいただければ幸いです！本書は3つの主要な章に分かれています：
 
-- [Idioms](./idioms/index.md): guidelines to follow when coding. They are the
-  social norms of the community. You should break them only if you have a good
-  reason for it.
-- [Design patterns](./patterns/index.md): methods to solve common problems when
-  coding.
-- [Anti-patterns](./anti_patterns/index.md): methods to solve common problems
-  when coding. However, while design patterns give us benefits, anti-patterns
-  create more problems.
+- [イディオム](./idioms/index.md): コーディング時に従うべきガイドライン。これらはコミュニティの社会的規範です。正当な理由がない限り、これらを破るべきではありません。
+- [デザインパターン](./patterns/index.md): コーディング時の一般的な問題を解決する方法。
+- [アンチパターン](./anti_patterns/index.md): コーディング時の一般的な問題を解決する方法。ただし、デザインパターンが利益をもたらすのに対し、アンチパターンはより多くの問題を生み出します。
 
 [^1]: https://web.archive.org/web/20240124025806/https://www.infoq.com/podcasts/software-architecture-hard-parts/
